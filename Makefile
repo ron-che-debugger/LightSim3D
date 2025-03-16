@@ -7,6 +7,8 @@ CUDA_ARCH = -gencode=arch=compute_52,code=\"sm_52,compute_52\"
 # Include directories
 INCLUDES = -I"./include" \
            -I"D:/External Installations/include" \
+           -I"D:/External_Apps/GLEW/include" \
+           -I"D:/External_Apps/GLFW/include" \
            -I"D:/External_Apps/JSON/json/include" \
            -I"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.41.34120/include" \
            -I"C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/ucrt" \
@@ -31,9 +33,12 @@ NVCC_COMPILE_FLAGS = $(CUDA_ARCH) -G -g -std=c++17 $(INCLUDES) $(DEFINES) \
                      -ccbin $(CCBIN)
 
 # Linker flags (use -Xlinker and properly quote paths with spaces)
-LINKER_FLAGS = -Xlinker /LIBPATH:\"C:/Program\ Files/Microsoft\ Visual\ Studio/2022/Community/VC/Tools/MSVC/14.41.34120/lib/x64\" \
+LINKER_FLAGS = -Xlinker /LIBPATH:\"D:/External_Apps/GLEW/lib\" \
+               -Xlinker /LIBPATH:\"D:/External_Apps/GLFW/lib\" \
+               -Xlinker /LIBPATH:\"C:/Program\ Files/Microsoft\ Visual\ Studio/2022/Community/VC/Tools/MSVC/14.41.34120/lib/x64\" \
                -Xlinker /LIBPATH:\"C:/Program\ Files\ \(x86\)/Windows\ Kits/10/Lib/10.0.22621.0/ucrt/x64\" \
-               -Xlinker /LIBPATH:\"C:/Program\ Files\ \(x86\)/Windows\ Kits/10/Lib/10.0.22621.0/um/x64\"
+               -Xlinker /LIBPATH:\"C:/Program\ Files\ \(x86\)/Windows\ Kits/10/Lib/10.0.22621.0/um/x64\" \
+               -lglew32 -lopengl32 -lglfw3 -luser32 -lgdi32 -lwinmm
 
 # NVCC link flags
 NVCC_LINK_FLAGS = $(CUDA_ARCH) -G -g $(INCLUDES) $(DEFINES) \
@@ -81,7 +86,6 @@ $(OBJDIR)/%.obj: $(SRCDIR)/%.cu
 
 # Run target
 run: $(TARGET)
-	./$(TARGET) sample.obj 800 600
 
 # Clean all build files
 clean:

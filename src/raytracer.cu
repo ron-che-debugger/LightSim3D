@@ -49,7 +49,7 @@ __device__ bool intersectTriangle(const Ray& ray, const Triangle& tri, float& t)
     return (t > 1e-6);  // Accept intersection if t is positive (ensures ray is moving forward)
 }
 
-__global__ void renderKernel(uchar4* pixels, int width, int height, Triangle* triangles, int numTriangles){
+__global__ void renderKernel(uchar4* pixels, int width, int height, Triangle* triangles, int numTriangles, float3 cameraPos, float3 cameraDir){
     int x = blockDim.x * blockIdx.x + threadIdx.x;
     int y = blockDim.y * blockIdx.y + threadIdx.y;
 
@@ -60,10 +60,13 @@ __global__ void renderKernel(uchar4* pixels, int width, int height, Triangle* tr
     int idx = y * width + x;
 
     Ray ray;
+
     // In a typical 3D setup, the XY plane represents the screen, and the camera is positioned along the negative Z-axis
-    ray.origin = make_float3(0, 0, -5);
-    // Camera is looking straight down the Z-axis at (0,0,500)
-    ray.direction = MathUtils::normalize(make_float3(x - width / 2, y - height / 2, 500));
+    ray.origin = cameraPos;
+
+    float3 pixelDir = MathUtils::normalize(make_float3((x - width / 2) * 0.002f, (y - height / 2) * 0.002f, 1.0f));
+
+    ray.direction = MathUtils::rotate(pixelDir, cameraDir);
 
     float minT = 1e20;
     float3 color = make_float3(0, 0, 0); // no intersection = black pixel.
