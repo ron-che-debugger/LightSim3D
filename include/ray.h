@@ -1,7 +1,7 @@
 #ifndef RAY_H
 #define RAY_H
 
-#include "mathutils.h"
+#include "math_utils.h"
 #include <cuda_runtime.h>
 
 struct Ray {

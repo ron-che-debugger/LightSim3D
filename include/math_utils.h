@@ -1,5 +1,5 @@
-#ifndef MATHUTILS_H
-#define MATHUTILS_H
+#ifndef MATH_UTILS_H
+#define MATH_UTILS_H
 
 #include <cuda_runtime.h>
 
@@ -54,4 +54,4 @@ inline __device__ __host__ float3 rotateObject(float3 vertex, float yaw, float p
 
 } // namespace MathUtils
 
-#endif // MATHUTILS_H
+#endif // MATH_UTILS_H

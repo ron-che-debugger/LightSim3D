@@ -1,6 +1,6 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "obj_loader.h"
-#include "mathutils.h"
+#include "math_utils.h"
 #include <iostream>
 
 using namespace std;

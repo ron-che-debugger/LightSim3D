@@ -1,5 +1,5 @@
 #include <cuda_runtime.h>
-#include "mathutils.h"
+#include "math_utils.h"
 #include "obj_loader.h"
 #include "ray.h"
 
