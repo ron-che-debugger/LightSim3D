@@ -1,5 +1,6 @@
 #include "obj_loader.h"
 #include "raytracer.h"
+#include "mathutils.h"
 #include <GLEW/glew.h>
 #include <GLFW/glfw3.h>
 #include <cuda_runtime.h>
@@ -8,29 +9,84 @@
 
 using namespace std;
 
-int width = 800;   // Define the image width
-int height = 600;  // Define the image height
+#define M_PI 3.14159265358979323846
 
+// Window dimensions
+int width = 800;   // Define the image width (default)
+int height = 600;  // Define the image height (default)
+
+// Object Rotation
+float objectYaw = 0.0f;
+float objectPitch = 0.0f;
+
+// OpenGL-CUDA interop resources
 GLuint pbo; // Pixel buffer object
 cudaGraphicsResource* cudaPBOResource;  // CUDA-OpenGL interop resource
 
+// Camera controls
 float3 cameraPos = make_float3(0, 0, -5);
 float3 cameraDir = make_float3(0, 0, 1);
 
+// Mouse rotation controls
+float yaw = 0.0f;
+float pitch = 0.0f;
+bool firstMouse = true;
+float lastX = width / 2.0f;
+float lastY = height / 2.0f;
+
 void updateCamera(GLFWwindow* window) {
     float speed = 0.1f;
+    float3 right = MathUtils::normalize(MathUtils::cross(make_float3(0, 1, 0), cameraDir));
 
-    // Move forward & backward along the camera's Z-axis
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) cameraPos.z += speed;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) cameraPos.z -= speed;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos = MathUtils::float3_add(cameraPos, MathUtils::float3_scale(cameraDir, speed));
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos = MathUtils::float3_subtract(cameraPos, MathUtils::float3_scale(cameraDir, speed));
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos = MathUtils::float3_subtract(cameraPos, MathUtils::float3_scale(right, speed));
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos = MathUtils::float3_add(cameraPos, MathUtils::float3_scale(right, speed));
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        cameraPos.y += speed;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        cameraPos.y -= speed;
+}
 
-    // Move left & right along the camera's X-axis
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) cameraPos.x -= speed;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) cameraPos.x += speed;
+void updateMouse(GLFWwindow* window, double xpos, double ypos) {
+    if (firstMouse) {
+        lastX = static_cast<float>(xpos);
+        lastY = static_cast<float>(ypos);
+        firstMouse = false;
+    }
 
-    // Move up & down along the camera's Y-axis
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) cameraPos.y += speed;  
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) cameraPos.y -= speed;  
+    float xoffset = static_cast<float>(xpos - lastX);
+    float yoffset = static_cast<float>(lastY - ypos);
+    lastX = static_cast<float>(xpos);
+    lastY = static_cast<float>(ypos);
+
+    float sensitivity = 0.08f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    objectYaw += xoffset * (static_cast<float>(M_PI) / 180.0f);
+    objectPitch += yoffset * (static_cast<float>(M_PI) / 180.0f);
+
+    if (objectPitch > 89.0f * (static_cast<float>(M_PI) / 180.0f))
+        objectPitch = 89.0f * (static_cast<float>(M_PI) / 180.0f);
+    if (objectPitch < -89.0f * (static_cast<float>(M_PI) / 180.0f))
+        objectPitch = -89.0f * (static_cast<float>(M_PI) / 180.0f);
+}
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);  // Unlock the cursor
+    }
+}
+
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  // Re-lock the cursor
+    }
 }
 
 void initOpenGL(){
@@ -48,6 +104,10 @@ void initOpenGL(){
         exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(window); // Tell OpenGL which window it should render into
+    glfwSetCursorPosCallback(window, updateMouse);
+    glfwSetKeyCallback(window, keyCallback);       // Register ESC key handling
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);  // Register mouse click handling
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Initially disable cursor
 
     // Initialize GLEW
     if (glewInit() != GLEW_OK) {
@@ -84,7 +144,9 @@ void renderHost(const vector<Triangle>& h_triangles){
     dim3 gridSize((width + blockSize.x - 1) / blockSize.x, (height + blockSize.y - 1) / blockSize.y);
 
     // Launch kernel
-    renderKernel<<<gridSize, blockSize>>>(d_pixels, width, height, d_triangles, h_triangles.size(), cameraPos, cameraDir);
+    renderKernel<<<gridSize, blockSize>>>(d_pixels, width, height, d_triangles, 
+        h_triangles.size(), cameraPos, cameraDir, 
+        objectYaw, objectPitch);
 
     // Unlocks the PBO so OpenGL can use it again
     cudaGraphicsUnmapResources(1, &cudaPBOResource, 0);

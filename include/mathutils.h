@@ -27,16 +27,31 @@ inline __device__ __host__ float3 float3_subtract(const float3 &a, const float3 
     return make_float3(a.x - b.x, a.y - b.y, a.z - b.z);
 }
 
-inline __device__ __host__ float3 rotate(const float3 &v, const float3 &targetDir) {
-    float3 up = (fabs(targetDir.y) > 0.99f) ? make_float3(1, 0, 0) : make_float3(0, 1, 0);
-    float3 right = MathUtils::normalize(MathUtils::cross(up, targetDir));
-    float3 newUp = MathUtils::normalize(MathUtils::cross(targetDir, right));
-
-    return make_float3(
-        v.x * right.x + v.y * newUp.x + v.z * targetDir.x,
-        v.x * right.y + v.y * newUp.y + v.z * targetDir.y,
-        v.x * right.z + v.y * newUp.z + v.z * targetDir.z);
+inline __device__ __host__ float3 float3_add(const float3 &a, const float3 &b) {
+    return make_float3(a.x + b.x, a.y + b.y, a.z + b.z);
 }
+
+inline __device__ __host__ float3 float3_scale(const float3& v, float scalar) {
+    return make_float3(v.x * scalar, v.y * scalar, v.z * scalar);
+}
+
+// Rotation Matrix Function
+inline __device__ __host__ float3 rotateObject(float3 vertex, float yaw, float pitch) {
+    float cosYaw = cosf(yaw);
+    float sinYaw = sinf(yaw);
+    float cosPitch = cosf(pitch);
+    float sinPitch = sinf(pitch);
+
+    float3 rotated;
+    
+    rotated.x = cosYaw * vertex.x - sinYaw * vertex.z;
+    rotated.z = sinYaw * vertex.x + cosYaw * vertex.z;
+    rotated.y = cosPitch * vertex.y - sinPitch * rotated.z;
+    rotated.z = sinPitch * vertex.y + cosPitch * rotated.z;
+
+    return rotated;
+}
+
 } // namespace MathUtils
 
 #endif // MATHUTILS_H
