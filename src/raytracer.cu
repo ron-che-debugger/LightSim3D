@@ -1,7 +1,4 @@
-#include <cuda_runtime.h>
-#include "math_utils.h"
-#include "obj_loader.h"
-#include "ray.h"
+#include "raytracer.h"
 
 __device__ float3 computeLighting(const float3& normal, const float3& lightDir) {
     float intensity = fmaxf(MathUtils::dot(normal, lightDir), 0.0f);

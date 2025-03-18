@@ -2,6 +2,8 @@
 #define OBJ_LOADER_H
 
 #include "tiny_obj_loader.h"
+#include "math_utils.h"
+#include <iostream>
 #include <vector>
 
 using namespace std;

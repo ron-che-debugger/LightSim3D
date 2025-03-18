@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <cuda_gl_interop.h>
 #include <iostream>
+#include "math_utils.h"
 
 extern int width;
 extern int height;
@@ -20,9 +21,9 @@ extern bool firstMouse;
 extern float lastX;
 extern float lastY;
 
-// Object Rotation
-extern float objectYaw;
-extern float objectPitch;
+// Camera Rotation
+extern float objectYaw; 
+extern float objectPitch;       
 
 // OpenGL-CUDA interop resources
 extern GLuint pbo; // Pixel buffer object
