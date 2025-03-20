@@ -8,6 +8,9 @@
 #endif
 
 namespace MathUtils {
+inline __device__ __host__ float getComponent(const float3& v, int axis) {
+    return (axis == 0) ? v.x : (axis == 1) ? v.y : v.z;
+}
 
 inline __device__ __host__ float dot(float3 a, float3 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
@@ -93,11 +96,6 @@ inline __device__ __host__ float3 rotateInverse(const float3& v, float yaw, floa
 
     return rotated;
 }
-
-inline __device__ __host__ float getComponent(const float3& v, int axis) {
-    return (axis == 0) ? v.x : (axis == 1) ? v.y : v.z;
-}
-
 } // namespace MathUtils
 
 #endif // MATH_UTILS_H

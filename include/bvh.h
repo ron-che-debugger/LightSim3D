@@ -6,6 +6,8 @@
 #include <vector>
 #include <algorithm>
 
+using namespace std;
+
 // Axis-Aligned Bounding Box (AABB)
 struct AABB {
     float3 min;
@@ -50,12 +52,12 @@ inline float3 computeCentroid(const Triangle &tri) {
 
 // BVH structure to hold the node array and the triangle index list.
 struct BVH {
-    std::vector<BVHNode> nodes;
-    std::vector<int> triangleIndices;
+    vector<BVHNode> nodes;
+    vector<int> triangleIndices;
     int rootIndex; // index of the root node in nodes array
 };
 
 // Build BVH from a list of triangles; maxLeafSize determines when to stop splitting.
-BVH buildBVH(const std::vector<Triangle> &triangles, int maxLeafSize = 4);
+BVH buildBVH(const vector<Triangle> &triangles, int maxLeafSize = 4);
 
 #endif // BVH_H

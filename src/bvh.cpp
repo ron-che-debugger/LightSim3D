@@ -4,9 +4,9 @@ namespace {
 
 // Recursive BVH builder helper. It builds a node for triangles in indices[start, start+count)
 // and returns its index in the nodes vector.
-int buildBVHRecursive(const std::vector<Triangle>& triangles,
-                      std::vector<int>& indices,
-                      std::vector<BVHNode>& nodes,
+int buildBVHRecursive(const vector<Triangle>& triangles,
+                      vector<int>& indices,
+                      vector<BVHNode>& nodes,
                       int start, int count,
                       int maxLeafSize) {
     BVHNode node;
@@ -50,7 +50,7 @@ int buildBVHRecursive(const std::vector<Triangle>& triangles,
             axis = 2;
         
         // Sort triangle indices based on centroid along chosen axis.
-        std::sort(indices.begin() + start, indices.begin() + start + count, [&](int a, int b) {
+        sort(indices.begin() + start, indices.begin() + start + count, [&](int a, int b) {
             float3 ca = computeCentroid(triangles[a]);
             float3 cb = computeCentroid(triangles[b]);
             return (axis == 0 ? ca.x < cb.x : (axis == 1 ? ca.y < cb.y : ca.z < cb.z));
@@ -72,7 +72,7 @@ int buildBVHRecursive(const std::vector<Triangle>& triangles,
 
 } // anonymous namespace
 
-BVH buildBVH(const std::vector<Triangle> &triangles, int maxLeafSize) {
+BVH buildBVH(const vector<Triangle> &triangles, int maxLeafSize) {
     BVH bvh;
     int numTriangles = triangles.size();
     bvh.triangleIndices.resize(numTriangles);

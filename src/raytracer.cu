@@ -54,16 +54,25 @@ __device__ bool intersectAABB(const Ray &ray, AABB box, float t_min, float t_max
             minVal = box.min.z;
             maxVal = box.max.z;
         }
+
+        // Computes t0 and t1, which are entry and exit points of the ray along the current axis
         float invD = 1.0f / dir;
         float t0 = (minVal - origin) * invD;
         float t1 = (maxVal - origin) * invD;
+
+        // If the ray direction is negative, t0 and t1 need to be swapped
+        // Ensures that t0 is always the entry point and t1 is the exit point
         if (invD < 0.0f) {
             float tmp = t0;
             t0 = t1;
             t1 = tmp;
         }
+
+        // Shrinks the valid intersection range
         t_min = t0 > t_min ? t0 : t_min;
         t_max = t1 < t_max ? t1 : t_max;
+
+        // This means the valid interval collapsed and there’s no overlap
         if (t_max <= t_min)
             return false;
     }
@@ -184,7 +193,7 @@ __global__ void renderKernel(uchar4* pixels, int width, int height,
     int idx = y * width + x;
     curandState localRandState = randStates[idx];
     float3 color = make_float3(0, 0, 0);
-    int numSamples = 100;
+    int numSamples = 40;
     
     for (int i = 0; i < numSamples; i++) {
         // Construct a world-space ray from the camera.
