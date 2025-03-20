@@ -8,8 +8,9 @@
 #endif
 
 namespace MathUtils {
-inline __device__ __host__ float getComponent(const float3& v, int axis) {
-    return (axis == 0) ? v.x : (axis == 1) ? v.y : v.z;
+inline __device__ __host__ float getComponent(const float3 &v, int axis) {
+    return (axis == 0) ? v.x : (axis == 1) ? v.y
+                                           : v.z;
 }
 
 inline __device__ __host__ float dot(float3 a, float3 b) {
@@ -46,15 +47,15 @@ inline __device__ __host__ float3 float3_multiply(const float3 &a, const float3 
     return make_float3(a.x * b.x, a.y * b.y, a.z * b.z);
 }
 
-inline __device__ __host__ float3 float3_min(const float3& a, const float3& b) {
-    return make_float3(fminf(a.x, b.x), 
-                       fminf(a.y, b.y), 
+inline __device__ __host__ float3 float3_min(const float3 &a, const float3 &b) {
+    return make_float3(fminf(a.x, b.x),
+                       fminf(a.y, b.y),
                        fminf(a.z, b.z));
 }
 
-inline __device__ __host__ float3 float3_max(const float3& a, const float3& b) {
-    return make_float3(fmaxf(a.x, b.x), 
-                       fmaxf(a.y, b.y), 
+inline __device__ __host__ float3 float3_max(const float3 &a, const float3 &b) {
+    return make_float3(fmaxf(a.x, b.x),
+                       fmaxf(a.y, b.y),
                        fmaxf(a.z, b.z));
 }
 
@@ -75,10 +76,9 @@ inline __device__ __host__ float3 rotateObject(float3 vertex, float yaw, float p
     return rotated;
 }
 
-inline __device__ __host__ float3 rotateInverse(const float3& v, float yaw, float pitch)
-{
+inline __device__ __host__ float3 rotateInverse(const float3 &v, float yaw, float pitch) {
     // Inverse rotation is just negative angles
-    float inverseYaw   = -yaw;
+    float inverseYaw = -yaw;
     float inversePitch = -pitch;
 
     // Apply pitch first (around X-axis or a chosen convention)

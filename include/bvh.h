@@ -3,8 +3,8 @@
 
 #include "math_utils.h"
 #include "obj_loader.h"
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 using namespace std;
 
@@ -17,10 +17,10 @@ struct AABB {
 // BVH Node definition
 struct BVHNode {
     AABB bbox;
-    int left;   // Index of left child (if not a leaf)
-    int right;  // Index of right child (if not a leaf)
-    int start;  // Starting index in the triangle indices array (if leaf)
-    int count;  // Number of triangles (if leaf)
+    int left;  // Index of left child (if not a leaf)
+    int right; // Index of right child (if not a leaf)
+    int start; // Starting index in the triangle indices array (if leaf)
+    int count; // Number of triangles (if leaf)
     bool isLeaf;
 };
 

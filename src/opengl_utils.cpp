@@ -113,3 +113,8 @@ void initOpenGL(){
     // cudaGraphicsRegisterFlagsWriteDiscard - tells CUDA that it does NOT need to preserve previous data when mapping the buffer
     cudaGraphicsGLRegisterBuffer(&cudaPBOResource, pbo, cudaGraphicsRegisterFlagsWriteDiscard);
 }
+
+void drawScreen() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+}
