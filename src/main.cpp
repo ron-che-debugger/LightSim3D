@@ -2,6 +2,7 @@
 #include "raytracer.h"
 #include "math_utils.h"
 #include "opengl_utils.h"
+#include "bvh.h"  
 #include <GLEW/glew.h>
 #include <GLFW/glfw3.h>
 #include <cuda_runtime.h>
@@ -14,31 +15,58 @@ using namespace std;
 int width = 800;   // Define the image width (default)
 int height = 600;  // Define the image height (default)
 
-void renderHost(const vector<Triangle>& h_triangles){
-    Triangle* d_triangles;  
+// In renderHost, after loading h_triangles:
+void renderHost(const std::vector<Triangle>& h_triangles) {
+    // Build BVH from the triangle list
+    BVH bvh = buildBVH(h_triangles);
+    
+    // Allocate and copy triangles to device memory
+    Triangle* d_triangles;
     cudaMalloc(&d_triangles, h_triangles.size() * sizeof(Triangle));
     cudaMemcpy(d_triangles, h_triangles.data(), h_triangles.size() * sizeof(Triangle), cudaMemcpyHostToDevice);
-
+    
+    // Allocate and copy BVH nodes to device memory
+    BVHNode* d_bvhNodes;
+    size_t nodesSize = bvh.nodes.size() * sizeof(BVHNode);
+    cudaMalloc(&d_bvhNodes, nodesSize);
+    cudaMemcpy(d_bvhNodes, bvh.nodes.data(), nodesSize, cudaMemcpyHostToDevice);
+    
+    // Allocate and copy triangle indices (for leaves) to device memory
+    int* d_triangleIndices;
+    size_t indicesSize = bvh.triangleIndices.size() * sizeof(int);
+    cudaMalloc(&d_triangleIndices, indicesSize);
+    cudaMemcpy(d_triangleIndices, bvh.triangleIndices.data(), indicesSize, cudaMemcpyHostToDevice);
+    
+    // Lock OpenGL PBO and map it to a CUDA pointer (unchanged)
     uchar4* d_pixels;
     size_t numBytes;
-    // Locks the OpenGL PBO for CUDA access (prevents OpenGL from using it)
     cudaGraphicsMapResources(1, &cudaPBOResource, 0);
-    // Retrieves a CUDA device pointer (d_pixels) to the PBO's memory 
-    cudaGraphicsResourceGetMappedPointer((void**)&d_pixels, &numBytes, cudaPBOResource); 
-
+    cudaGraphicsResourceGetMappedPointer((void**)&d_pixels, &numBytes, cudaPBOResource);
+    
+    // Allocate and initialize random states (unchanged)
+    curandState* d_randStates;
+    cudaMalloc(&d_randStates, width * height * sizeof(curandState));
+    
     dim3 blockSize(16, 16);
-    dim3 gridSize((width + blockSize.x - 1) / blockSize.x, (height + blockSize.y - 1) / blockSize.y);
-
-    // Launch kernel
-    renderKernel<<<gridSize, blockSize>>>(d_pixels, width, height, d_triangles, 
-        h_triangles.size(), cameraPos, cameraDir, 
-        objectYaw, objectPitch);
-
-    // Unlocks the PBO so OpenGL can use it again
+    dim3 gridSize((width + blockSize.x - 1) / blockSize.x,
+                  (height + blockSize.y - 1) / blockSize.y);
+    initRandomStates<<<gridSize, blockSize>>>(d_randStates, width, height);
+    cudaDeviceSynchronize();
+    
+    // Launch kernel with BVH parameters:
+    renderKernel<<<gridSize, blockSize>>>(d_pixels, width, height,
+                                          d_bvhNodes, d_triangleIndices, d_triangles, bvh.rootIndex,
+                                          d_randStates, cameraPos, cameraDir, objectYaw, objectPitch);
+    
     cudaGraphicsUnmapResources(1, &cudaPBOResource, 0);
-
+    
+    // Free device memory used for BVH and triangles
     cudaFree(d_triangles);
+    cudaFree(d_bvhNodes);
+    cudaFree(d_triangleIndices);
+    cudaFree(d_randStates);
 }
+
 
 void drawScreen() {
     glClear(GL_COLOR_BUFFER_BIT); // Reset the screen

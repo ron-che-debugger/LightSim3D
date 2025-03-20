@@ -2,8 +2,6 @@
 
 using namespace std;
 
-#define M_PI 3.14159265358979323846
-
 extern int width;
 extern int height;
 
@@ -56,13 +54,13 @@ void updateMouse(GLFWwindow* window, double xpos, double ypos) {
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
-    objectYaw += xoffset * (static_cast<float>(M_PI) / 180.0f);
-    objectPitch += yoffset * (static_cast<float>(M_PI) / 180.0f);
+    objectYaw += xoffset * (M_PI / 180.0f);
+    objectPitch += yoffset * (M_PI / 180.0f);
 
-    if (objectPitch > 89.0f * (static_cast<float>(M_PI) / 180.0f))
-        objectPitch = 89.0f * (static_cast<float>(M_PI) / 180.0f);
-    if (objectPitch < -89.0f * (static_cast<float>(M_PI) / 180.0f))
-        objectPitch = -89.0f * (static_cast<float>(M_PI) / 180.0f);
+    if (objectPitch > 89.0f * (M_PI / 180.0f))
+        objectPitch = 89.0f * (M_PI / 180.0f);
+    if (objectPitch < -89.0f * (M_PI / 180.0f))
+        objectPitch = -89.0f * (M_PI / 180.0f);
 }
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {

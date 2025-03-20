@@ -46,6 +46,11 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
             float3 edge1 = MathUtils::float3_subtract(tri.v1, tri.v0);
             float3 edge2 = MathUtils::float3_subtract(tri.v2, tri.v0);
             tri.normal = MathUtils::normalize(MathUtils::cross(edge1, edge2));
+            
+            // Assign emission to specific faces (e.g., upward-facing surfaces)
+            if (tri.normal.y > 0.9f) {  // Ceiling light
+                tri.emission = make_float3(5.0f, 5.0f, 5.0f);  // Bright white light
+            }
 
             triangles.push_back(tri);
         }

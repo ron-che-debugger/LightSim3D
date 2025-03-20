@@ -57,6 +57,7 @@ TARGET = raytracer.exe
 SHARED_SRC = $(wildcard $(SRCDIR)/math_utils.cpp) \
              $(wildcard $(SRCDIR)/opengl_utils.cpp) \
              $(wildcard $(SRCDIR)/obj_loader.cpp) \
+             $(wildcard $(SRCDIR)/bvh.cpp) \
              $(wildcard $(SRCDIR)/ray.cpp) 
 
 SHARED_OBJ = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.obj,$(SHARED_SRC:.cu=.cpp)) \
