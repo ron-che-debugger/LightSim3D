@@ -19,7 +19,7 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
         for (size_t i = 0; i < shape.mesh.indices.size(); i += 3){
             Triangle tri;
             
-            // Get the three indices for this triangle
+            // Get indices for the triangle vertices.
             int idx0 = shape.mesh.indices[i + 0].vertex_index;
             int idx1 = shape.mesh.indices[i + 1].vertex_index;
             int idx2 = shape.mesh.indices[i + 2].vertex_index;
@@ -42,16 +42,23 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
                 attrib.vertices[3 * idx2 + 2]
             );
 
-            // Compute normal using cross product (assuming counterclockwise order)
+            // Compute the triangle’s face normal (assumes counterclockwise winding).
             float3 edge1 = MathUtils::float3_subtract(tri.v1, tri.v0);
             float3 edge2 = MathUtils::float3_subtract(tri.v2, tri.v0);
             tri.normal = MathUtils::normalize(MathUtils::cross(edge1, edge2));
             
-            // Assign emission to specific faces (e.g., upward-facing surfaces)
-            if (tri.normal.y > 0.9f) {  // Ceiling light
-                tri.emission = make_float3(5.0f, 5.0f, 5.0f);  // Bright white light
-            }
+            // Set default material properties:
+            tri.material.albedo   = make_float3(0.8f, 0.8f, 0.8f); // Diffuse color
+            tri.material.metallic = 0.0f;                        // Default: non-metallic
+            tri.material.roughness= 0.5f;                        // Moderate roughness
 
+            // If the face is upward–facing or right-facing, treat it as a light source.
+            if (tri.normal.y > 0.9f) {
+                tri.material.emission = make_float3(5.0f, 5.0f, 5.0f);
+            } else {
+                tri.material.emission = make_float3(0.0f, 0.0f, 0.0f);
+            }
+            
             triangles.push_back(tri);
         }
     }

@@ -22,6 +22,8 @@ Triangle* d_triangles = nullptr;
 BVHNode* d_bvhNodes = nullptr;
 int* d_triangleIndices = nullptr;
 curandState* d_randStates = nullptr;
+Triangle* d_lightTriangles = nullptr;  
+int d_numLights = 0; 
 
 // Forward declarations
 void initDeviceMemory(const vector<Triangle>& h_triangles, const BVH& bvh);
@@ -88,21 +90,31 @@ int main(int argc, char** argv) {
 // This function initializes device memory for triangles, BVH nodes, triangle indices,
 // and random states, and it copies static scene data from host to device once.
 void initDeviceMemory(const vector<Triangle>& h_triangles, const BVH& bvh) {
-    // Allocate and copy triangles
+    // Allocate and copy triangles.
     cudaMalloc(&d_triangles, h_triangles.size() * sizeof(Triangle));
     cudaMemcpy(d_triangles, h_triangles.data(), h_triangles.size() * sizeof(Triangle), cudaMemcpyHostToDevice);
 
-    // Allocate and copy BVH nodes
+    // Allocate and copy BVH nodes.
     size_t nodesSize = bvh.nodes.size() * sizeof(BVHNode);
     cudaMalloc(&d_bvhNodes, nodesSize);
     cudaMemcpy(d_bvhNodes, bvh.nodes.data(), nodesSize, cudaMemcpyHostToDevice);
 
-    // Allocate and copy triangle indices (for leaf nodes)
+    // Allocate and copy triangle indices.
     size_t indicesSize = bvh.triangleIndices.size() * sizeof(int);
     cudaMalloc(&d_triangleIndices, indicesSize);
     cudaMemcpy(d_triangleIndices, bvh.triangleIndices.data(), indicesSize, cudaMemcpyHostToDevice);
 
-    // Allocate random states for each pixel
+    // Build list of light triangles from emissive surfaces.
+    vector<Triangle> h_lightTriangles;
+    for (const auto &tri : h_triangles) {
+        if (tri.material.emission.x > 0.0f || tri.material.emission.y > 0.0f || tri.material.emission.z > 0.0f)
+            h_lightTriangles.push_back(tri);
+    }
+    d_numLights = h_lightTriangles.size();
+    cudaMalloc(&d_lightTriangles, d_numLights * sizeof(Triangle));
+    cudaMemcpy(d_lightTriangles, h_lightTriangles.data(), d_numLights * sizeof(Triangle), cudaMemcpyHostToDevice);
+
+    // Allocate random states.
     cudaMalloc(&d_randStates, width * height * sizeof(curandState));
     dim3 blockSize(16, 16);
     dim3 gridSize((width + blockSize.x - 1) / blockSize.x,
@@ -125,6 +137,7 @@ void renderHost(const BVH& bvh) {
 
     renderKernel<<<gridSize, blockSize>>>(d_pixels, width, height,
                                           d_bvhNodes, d_triangleIndices, d_triangles, bvh.rootIndex,
-                                          d_randStates, cameraPos, cameraDir, objectYaw, objectPitch);
+                                          d_randStates, cameraPos, cameraDir, objectYaw, objectPitch,
+                                          d_lightTriangles, d_numLights);
     cudaGraphicsUnmapResources(1, &cudaPBOResource, 0);
 }
