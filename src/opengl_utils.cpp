@@ -17,6 +17,8 @@ float lastY = height / 2.0f;
 float objectYaw = 0.0f;
 float objectPitch = 0.0f;
 
+bool cursorLocked = true;  // Track whether the cursor is locked
+
 GLuint pbo;
 cudaGraphicsResource* cudaPBOResource;
 
@@ -39,6 +41,10 @@ void updateCamera(GLFWwindow* window) {
 }
 
 void updateMouse(GLFWwindow* window, double xpos, double ypos) {
+    // Only update rotation if the cursor is locked
+    if (!cursorLocked)
+        return;
+
     if (firstMouse) {
         lastX = static_cast<float>(xpos);
         lastY = static_cast<float>(ypos);
@@ -66,12 +72,15 @@ void updateMouse(GLFWwindow* window, double xpos, double ypos) {
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);  // Unlock the cursor
+        cursorLocked = false; // Stop mouse rotation when cursor is unlocked
     }
 }
 
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  // Re-lock the cursor
+        cursorLocked = true; // Resume mouse rotation when cursor is locked
+        firstMouse = true;   // Reset firstMouse to avoid jump on re-locking
     }
 }
 
