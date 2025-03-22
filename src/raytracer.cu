@@ -157,8 +157,14 @@ __device__ float3 pathTrace(
         float closestT = 1e20f;
         Triangle hitTriangle;
         bool hit = traverseBVH(ray, bvhNodes, triangleIndices, triangles, rootIndex, closestT, hitTriangle);
-        if (!hit)
+        
+        if (!hit) {
+            float t = 0.5f * (ray.direction.y + 1.0f);
+            color = MathUtils::float3_add(
+                        MathUtils::float3_scale(make_float3(1.0f, 1.0f, 1.0f), (1.0f - t)),
+                        MathUtils::float3_scale(make_float3(0.5f, 0.7f, 1.0f), t));
             break;
+        }
         
         float3 hitPoint = MathUtils::float3_add(ray.origin, MathUtils::float3_scale(ray.direction, closestT));
         float3 normal = hitTriangle.normal;

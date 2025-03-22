@@ -54,7 +54,7 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
 
             // If the face is upward–facing or right-facing, treat it as a light source.
             if (tri.normal.y > 0.9f) {
-                tri.material.emission = make_float3(5.0f, 5.0f, 5.0f);
+                tri.material.emission = make_float3(6.0f, 4.0f, 2.0f);
             } else {
                 tri.material.emission = make_float3(0.0f, 0.0f, 0.0f);
             }
