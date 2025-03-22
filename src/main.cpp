@@ -41,18 +41,29 @@ int main(int argc, char** argv) {
         height = atoi(argv[3]);
     }
 
-    // Load the OBJ file into a triangle list
+    // Parse the optional rendering effect argument.
+    // Supported effects: "metal", "matte", or "default" (if unspecified)
+    string effect = "default";
+    if (argc >= 5) {
+        effect = argv[4];
+    }
+    cout << "Using rendering effect: " << effect << endl;
+
+    // Load the OBJ file into a triangle list.
     vector<Triangle> h_triangles;
     if (!loadOBJ(argv[1], h_triangles)) {
         cerr << "Failed to load OBJ file!" << endl;
         return -1;
     }
     
+    // Apply the chosen rendering effect to object materials.
+    applyRenderingEffect(h_triangles, effect);
+    
     // Create environment geometry (a large sphere that encloses the scene)
-    float envRadius = 100.0f;    // Choose a radius that encloses your scene
-    int envRings = 16;           // Adjust for desired resolution
-    int envSectors = 32;
-    float3 envEmission = make_float3(1.0f, 0.9f, 0.7f); // Emission intensity/color for the environment
+    float envRadius = 100.0f;    
+    int envRings = 4;           
+    int envSectors = 8;
+    float3 envEmission = make_float3(1.0, 1.0f, 1.0f); // Emission intensity/color for the environment
     float3 envAlbedo = make_float3(1.0f, 1.0f, 1.0f);
     vector<Triangle> envTriangles = createEnvironmentSphere(envRadius, envRings, envSectors, envEmission, envAlbedo);
 
@@ -140,9 +151,9 @@ vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, f
     vector<float3> vertices;
     
     // Generate vertices for a UV sphere
-    for (int i = 0; i <= rings; i++) {
+    for (int i = 0; i <= rings; i++) { // Horizontal divisions
         float theta = i * M_PI / rings;  // [0, pi]
-        for (int j = 0; j <= sectors; j++) {
+        for (int j = 0; j <= sectors; j++) { // Vertical divisions
             float phi = j * 2.0f * M_PI / sectors; // [0, 2pi]
             float x = radius * sinf(theta) * cosf(phi);
             float y = radius * cosf(theta);

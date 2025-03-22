@@ -158,13 +158,12 @@ __device__ float3 pathTrace(
         Triangle hitTriangle;
         bool hit = traverseBVH(ray, bvhNodes, triangleIndices, triangles, rootIndex, closestT, hitTriangle);
         
-        if (!hit) {
-            float t = 0.5f * (ray.direction.y + 1.0f);
-            color = MathUtils::float3_add(
-                        MathUtils::float3_scale(make_float3(1.0f, 1.0f, 1.0f), (1.0f - t)),
-                        MathUtils::float3_scale(make_float3(0.5f, 0.7f, 1.0f), t));
+        /** Unnecessary since we have an environment sphere, each ray hits something eventually
+         * if (!hit) {
+            color = MathUtils::float3_multiply(throughput, make_float3(0.5f, 0.7f, 1.0f)); // Uniform sky blue 
             break;
         }
+        */
         
         float3 hitPoint = MathUtils::float3_add(ray.origin, MathUtils::float3_scale(ray.direction, closestT));
         float3 normal = hitTriangle.normal;
@@ -173,13 +172,12 @@ __device__ float3 pathTrace(
         if (hitTriangle.material.emission.x > 0.0f ||
             hitTriangle.material.emission.y > 0.0f ||
             hitTriangle.material.emission.z > 0.0f) {
-            if (hitTriangle.isEnvironment) {
-                // Use a background gradient for environment geometry.
-                float t = 0.5f * (ray.direction.y + 1.0f);
-                color = MathUtils::float3_add(
-                            MathUtils::float3_scale(make_float3(1.0f, 1.0f, 1.0f), (1.0f - t)),
-                            MathUtils::float3_scale(make_float3(0.5f, 0.7f, 1.0f), t));
+
+            if (i == 0) {
+                // For primary rays hitting the environment, override to sky blue.
+                color = MathUtils::float3_multiply(throughput, make_float3(0.5f, 0.7f, 1.0f));
             } else {
+                // For reflective bounces, use the environment's actual emission.
                 color = MathUtils::float3_multiply(throughput, hitTriangle.material.emission);
             }
             break;
@@ -266,7 +264,7 @@ __global__ void renderKernel(uchar4* pixels, int width, int height,
         
         color = MathUtils::float3_add(color,
             pathTrace(localRay, bvhNodes, triangleIndices, triangles, rootIndex,
-                      &localRandState, 5, lightTriangles, numLights));
+                      &localRandState, 20, lightTriangles, numLights));
     }
     
     color = MathUtils::float3_scale(color, 1.0f / numSamples);

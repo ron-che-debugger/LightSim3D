@@ -48,9 +48,9 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
             tri.normal = MathUtils::normalize(MathUtils::cross(edge1, edge2));
             
             // Set default material properties:
-            tri.material.albedo   = make_float3(0.8f, 0.8f, 0.8f); // Diffuse color
-            tri.material.metallic = 0.0f;                        // Default: non-metallic
-            tri.material.roughness= 0.5f;                        // Moderate roughness
+            tri.material.albedo   = make_float3(1.0f, 1.0f, 1.0f); // Diffuse color
+            tri.material.metallic = 0.0f;                        // 0 = non-metal (like plastic), 1 = metal
+            tri.material.roughness= 0.5f;                        // 0 = perfect mirror, 1 = chalk
             // No emission for object geometry
             tri.material.emission = make_float3(0.0f, 0.0f, 0.0f);
             // Mark as object geometry
@@ -61,4 +61,28 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
     }
 
     return true;
+}
+
+// Helper function to update materials based on the selected effect.
+void applyRenderingEffect(vector<Triangle>& triangles, const string &effect) {
+    for (auto &tri : triangles) {
+        // Only update non-environment and non-emissive (object) triangles.
+        if (!tri.isEnvironment &&
+            tri.material.emission.x == 0.0f &&
+            tri.material.emission.y == 0.0f &&
+            tri.material.emission.z == 0.0f) {
+
+            if (effect == "metal") {
+                tri.material.metallic = 1.0f;   // Fully metallic
+                tri.material.roughness = 0.2f;  // Lower roughness for a shinier look
+            } else if (effect == "matte") {
+                tri.material.metallic = 0.0f;   // Purely diffuse
+                tri.material.roughness = 1.0f;  // Higher roughness gives a matte finish
+            } else if (effect == "default") {
+                // Use default values (or leave unchanged)
+                tri.material.metallic = 0.1f;
+                tri.material.roughness = 0.5f;
+            }
+        }
+    }
 }
