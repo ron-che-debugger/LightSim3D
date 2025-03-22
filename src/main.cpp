@@ -27,6 +27,7 @@ int d_numLights = 0;
 
 // Forward declarations
 void initDeviceMemory(const vector<Triangle>& h_triangles, const BVH& bvh);
+vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, float3 emission, float3 albedo);
 void renderHost(const BVH& bvh);
 
 int main(int argc, char** argv) {
@@ -46,7 +47,18 @@ int main(int argc, char** argv) {
         cerr << "Failed to load OBJ file!" << endl;
         return -1;
     }
+    
+    // Create environment geometry (a large sphere that encloses the scene)
+    float envRadius = 100.0f;    // Choose a radius that encloses your scene
+    int envRings = 16;           // Adjust for desired resolution
+    int envSectors = 32;
+    float3 envEmission = make_float3(1.0f, 0.9f, 0.7f); // Emission intensity/color for the environment
+    float3 envAlbedo = make_float3(1.0f, 1.0f, 1.0f);
+    vector<Triangle> envTriangles = createEnvironmentSphere(envRadius, envRings, envSectors, envEmission, envAlbedo);
 
+    // Append environment triangles to the scene
+    h_triangles.insert(h_triangles.end(), envTriangles.begin(), envTriangles.end());
+    
     // Build the BVH for the loaded triangles (only once)
     BVH bvh = buildBVH(h_triangles);
 
@@ -121,6 +133,69 @@ void initDeviceMemory(const vector<Triangle>& h_triangles, const BVH& bvh) {
                   (height + blockSize.y - 1) / blockSize.y);
     initRandomStates<<<gridSize, blockSize>>>(d_randStates, width, height);
     cudaDeviceSynchronize();
+}
+
+vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, float3 emission, float3 albedo) {
+    vector<Triangle> sphereTriangles;
+    vector<float3> vertices;
+    
+    // Generate vertices for a UV sphere
+    for (int i = 0; i <= rings; i++) {
+        float theta = i * M_PI / rings;  // [0, pi]
+        for (int j = 0; j <= sectors; j++) {
+            float phi = j * 2.0f * M_PI / sectors; // [0, 2pi]
+            float x = radius * sinf(theta) * cosf(phi);
+            float y = radius * cosf(theta);
+            float z = radius * sinf(theta) * sinf(phi);
+            vertices.push_back(make_float3(x, y, z));
+        }
+    }
+    
+    // Create triangles for each quad on the sphere surface
+    for (int i = 0; i < rings; i++) {
+        for (int j = 0; j < sectors; j++) {
+            int first = i * (sectors + 1) + j;
+            int second = first + sectors + 1;
+            
+            // Triangle 1
+            Triangle t1;
+            t1.v0 = vertices[first];
+            t1.v1 = vertices[second];
+            t1.v2 = vertices[first + 1];
+            float3 edge1 = MathUtils::float3_subtract(t1.v1, t1.v0);
+            float3 edge2 = MathUtils::float3_subtract(t1.v2, t1.v0);
+            float3 n = MathUtils::normalize(MathUtils::cross(edge1, edge2));
+            // Invert the normal if it points outward
+            if (MathUtils::dot(n, t1.v0) > 0)
+                n = MathUtils::float3_scale(n, -1.0f);
+            t1.normal = n;
+            t1.material.albedo = albedo;
+            t1.material.emission = emission;
+            t1.material.metallic = 0.0f;
+            t1.material.roughness = 0.0f;
+            t1.isEnvironment = true;
+            sphereTriangles.push_back(t1);
+            
+            // Triangle 2
+            Triangle t2;
+            t2.v0 = vertices[second];
+            t2.v1 = vertices[second + 1];
+            t2.v2 = vertices[first + 1];
+            float3 edge1b = MathUtils::float3_subtract(t2.v1, t2.v0);
+            float3 edge2b = MathUtils::float3_subtract(t2.v2, t2.v0);
+            float3 n2 = MathUtils::normalize(MathUtils::cross(edge1b, edge2b));
+            if (MathUtils::dot(n2, t2.v0) > 0)
+                n2 = MathUtils::float3_scale(n2, -1.0f);
+            t2.normal = n2;
+            t2.material.albedo = albedo;
+            t2.material.emission = emission;
+            t2.material.metallic = 0.0f;
+            t2.material.roughness = 0.0f;
+            t2.isEnvironment = true;
+            sphereTriangles.push_back(t2);
+        }
+    }
+    return sphereTriangles;
 }
 
 // This render function maps the preallocated OpenGL PBO to a CUDA pointer and launches

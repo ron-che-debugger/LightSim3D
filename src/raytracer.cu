@@ -173,7 +173,15 @@ __device__ float3 pathTrace(
         if (hitTriangle.material.emission.x > 0.0f ||
             hitTriangle.material.emission.y > 0.0f ||
             hitTriangle.material.emission.z > 0.0f) {
-            color = MathUtils::float3_add(color, MathUtils::float3_multiply(throughput, hitTriangle.material.emission));
+            if (hitTriangle.isEnvironment) {
+                // Use a background gradient for environment geometry.
+                float t = 0.5f * (ray.direction.y + 1.0f);
+                color = MathUtils::float3_add(
+                            MathUtils::float3_scale(make_float3(1.0f, 1.0f, 1.0f), (1.0f - t)),
+                            MathUtils::float3_scale(make_float3(0.5f, 0.7f, 1.0f), t));
+            } else {
+                color = MathUtils::float3_multiply(throughput, hitTriangle.material.emission);
+            }
             break;
         }
         

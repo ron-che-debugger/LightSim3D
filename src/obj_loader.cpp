@@ -51,13 +51,10 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
             tri.material.albedo   = make_float3(0.8f, 0.8f, 0.8f); // Diffuse color
             tri.material.metallic = 0.0f;                        // Default: non-metallic
             tri.material.roughness= 0.5f;                        // Moderate roughness
-
-            // If the face is upward–facing or right-facing, treat it as a light source.
-            if (tri.normal.y > 0.9f) {
-                tri.material.emission = make_float3(6.0f, 4.0f, 2.0f);
-            } else {
-                tri.material.emission = make_float3(0.0f, 0.0f, 0.0f);
-            }
+            // No emission for object geometry
+            tri.material.emission = make_float3(0.0f, 0.0f, 0.0f);
+            // Mark as object geometry
+            tri.isEnvironment = false;
             
             triangles.push_back(tri);
         }
