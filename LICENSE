@@ -1,12 +1,21 @@
-## Author
+MIT License
 
-This project was developed by **Ronghan** in 2025 as a high-performance, GPU-accelerated raytracer that leverages CUDA and OpenGL interop. It implements advanced rendering techniques such as:
+Copyright (c) 2025 Ronghan
 
-- **BVH Acceleration**: Efficiently traverses scene geometry with a Bounding Volume Hierarchy.
-- **Physically-Based Rendering (PBR)**: Realistic material modeling including diffuse, specular, and emissive components.
-- **Direct Light Sampling & Monte Carlo Integration**: For robust global illumination and realistic lighting.
-- **OBJ Importing & Environment Mapping**: Loads complex 3D models and utilizes environment spheres for lighting.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights   
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      
+copies of the Software, and to permit persons to whom the Software is          
+furnished to do so, subject to the following conditions:                      
 
-This modular project is designed for real-time rendering and experimentation with cutting-edge graphics algorithms. Contributions, feedback, and collaborations are welcome!
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.                                
 
-For inquiries, please contact me at [ronghanche@gmail.com].
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  
+SOFTWARE.
