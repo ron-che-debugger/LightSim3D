@@ -22,6 +22,11 @@ bool cursorLocked = true;  // Track whether the cursor is locked
 GLuint pbo;
 cudaGraphicsResource* cudaPBOResource;
 
+/**
+ * @brief Update camera position using WASD and vertical keys based on user input.
+ *
+ * @param window Pointer to the GLFW window handling input events.
+ */
 void updateCamera(GLFWwindow* window) {
     float speed = 0.1f;
     float3 right = MathUtils::normalize(MathUtils::cross(make_float3(0, 1, 0), cameraDir));
@@ -40,6 +45,15 @@ void updateCamera(GLFWwindow* window) {
         cameraPos.y -= speed;
 }
 
+/**
+ * @brief Update camera rotation based on mouse movement.
+ *
+ * This function is triggered by the mouse callback and updates pitch and yaw angles.
+ *
+ * @param window Pointer to the GLFW window.
+ * @param xpos Current X position of the mouse.
+ * @param ypos Current Y position of the mouse.
+ */
 void updateMouse(GLFWwindow* window, double xpos, double ypos) {
     // Only update rotation if the cursor is locked
     if (!cursorLocked)
@@ -69,6 +83,15 @@ void updateMouse(GLFWwindow* window, double xpos, double ypos) {
         objectPitch = -89.0f * (M_PI / 180.0f);
 }
 
+/**
+ * @brief GLFW key callback for ESC key to unlock the cursor.
+ *
+ * @param window Pointer to the GLFW window.
+ * @param key Key code of the pressed key.
+ * @param scancode Platform-specific scan code.
+ * @param action Action type (press, release).
+ * @param mods Modifier keys (shift, alt, etc.).
+ */
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);  // Unlock the cursor
@@ -76,6 +99,14 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
     }
 }
 
+/**
+ * @brief GLFW mouse button callback to re-lock the cursor on left click.
+ *
+ * @param window Pointer to the GLFW window.
+ * @param button Mouse button code.
+ * @param action Action type (press or release).
+ * @param mods Modifier keys.
+ */
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  // Re-lock the cursor
@@ -84,13 +115,16 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
     }
 }
 
+/**
+ * @brief Initialize GLFW, GLEW, input callbacks, and set up CUDA-OpenGL interop with a pixel buffer object.
+ */
 void initOpenGL(){
     // Initialize GLFW
     if (!glfwInit()){
         cerr << "Failed to initialize GLFW" << endl;
         exit(EXIT_FAILURE);
     }
-    
+
     // Create OpenGL Window
     GLFWwindow* window = glfwCreateWindow(width, height, "CUDA Raytracer", NULL, NULL);
     if (!window){
@@ -123,6 +157,9 @@ void initOpenGL(){
     cudaGraphicsGLRegisterBuffer(&cudaPBOResource, pbo, cudaGraphicsRegisterFlagsWriteDiscard);
 }
 
+/**
+ * @brief Display the CUDA-rendered image by drawing the contents of the PBO.
+ */
 void drawScreen() {
     glClear(GL_COLOR_BUFFER_BIT);
     glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, 0);

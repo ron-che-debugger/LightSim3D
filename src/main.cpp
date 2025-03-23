@@ -30,6 +30,16 @@ void initDeviceMemory(const vector<Triangle>& h_triangles, const BVH& bvh);
 vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, float3 emission, float3 albedo);
 void renderHost(const BVH& bvh);
 
+/**
+ * @brief Entry point for the CUDA path tracer.
+ *
+ * This function parses arguments, loads a 3D model from OBJ, applies material effects,
+ * constructs a BVH, sets up OpenGL and CUDA interop, and enters the render loop.
+ *
+ * @param argc Argument count.
+ * @param argv Argument values. Usage: ./raytracer <obj_file> [width height] [effect]
+ * @return Exit code (0 on success, -1 on failure).
+ */
 int main(int argc, char** argv) {
     if (argc < 2) {
         cerr << "Usage: ./raytracer <path-to-obj> [width height]" << endl;
@@ -61,8 +71,8 @@ int main(int argc, char** argv) {
     
     // Create environment geometry (a large sphere that encloses the scene)
     float envRadius = 100.0f;    
-    int envRings = 4;           
-    int envSectors = 8;
+    int envRings = 2;           
+    int envSectors = 4;
     float3 envEmission = make_float3(1.0, 1.0f, 1.0f); // Emission intensity/color for the environment
     float3 envAlbedo = make_float3(1.0f, 1.0f, 1.0f);
     vector<Triangle> envTriangles = createEnvironmentSphere(envRadius, envRings, envSectors, envEmission, envAlbedo);
@@ -110,24 +120,33 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-// This function initializes device memory for triangles, BVH nodes, triangle indices,
-// and random states, and it copies static scene data from host to device once.
+/**
+ * @brief Initializes all device memory used during rendering, including:
+ *        - Copying triangle geometry to device memory
+ *        - Building the BVH node buffer
+ *        - Copying triangle indices
+ *        - Extracting emissive light triangles
+ *        - Allocating per-pixel CURAND random states
+ *
+ * @param h_triangles Host-side triangle geometry.
+ * @param bvh The precomputed BVH structure.
+ */
 void initDeviceMemory(const vector<Triangle>& h_triangles, const BVH& bvh) {
     // Allocate and copy triangles.
     cudaMalloc(&d_triangles, h_triangles.size() * sizeof(Triangle));
     cudaMemcpy(d_triangles, h_triangles.data(), h_triangles.size() * sizeof(Triangle), cudaMemcpyHostToDevice);
 
-    // Allocate and copy BVH nodes.
+    // Allocate and copy BVH nodes
     size_t nodesSize = bvh.nodes.size() * sizeof(BVHNode);
     cudaMalloc(&d_bvhNodes, nodesSize);
     cudaMemcpy(d_bvhNodes, bvh.nodes.data(), nodesSize, cudaMemcpyHostToDevice);
 
-    // Allocate and copy triangle indices.
+    // Allocate and copy triangle indices
     size_t indicesSize = bvh.triangleIndices.size() * sizeof(int);
     cudaMalloc(&d_triangleIndices, indicesSize);
     cudaMemcpy(d_triangleIndices, bvh.triangleIndices.data(), indicesSize, cudaMemcpyHostToDevice);
 
-    // Build list of light triangles from emissive surfaces.
+    // Build list of light triangles from emissive surfaces
     vector<Triangle> h_lightTriangles;
     for (const auto &tri : h_triangles) {
         if (tri.material.emission.x > 0.0f || tri.material.emission.y > 0.0f || tri.material.emission.z > 0.0f)
@@ -137,7 +156,7 @@ void initDeviceMemory(const vector<Triangle>& h_triangles, const BVH& bvh) {
     cudaMalloc(&d_lightTriangles, d_numLights * sizeof(Triangle));
     cudaMemcpy(d_lightTriangles, h_lightTriangles.data(), d_numLights * sizeof(Triangle), cudaMemcpyHostToDevice);
 
-    // Allocate random states.
+    // Allocate random states
     cudaMalloc(&d_randStates, width * height * sizeof(curandState));
     dim3 blockSize(16, 16);
     dim3 gridSize((width + blockSize.x - 1) / blockSize.x,
@@ -146,6 +165,19 @@ void initDeviceMemory(const vector<Triangle>& h_triangles, const BVH& bvh) {
     cudaDeviceSynchronize();
 }
 
+/**
+ * @brief Creates an emissive environment sphere around the scene using a UV sphere approximation.
+ *
+ * The sphere is composed of multiple triangles and acts as both a light source and a fallback
+ * background surface for rays that don't hit any object geometry.
+ *
+ * @param radius Radius of the environment sphere.
+ * @param rings Number of horizontal subdivisions.
+ * @param sectors Number of vertical subdivisions.
+ * @param emission Emissive color of the environment surface.
+ * @param albedo Diffuse color of the environment surface.
+ * @return A vector of triangles representing the environment geometry.
+ */
 vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, float3 emission, float3 albedo) {
     vector<Triangle> sphereTriangles;
     vector<float3> vertices;
@@ -183,7 +215,6 @@ vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, f
             t1.material.albedo = albedo;
             t1.material.emission = emission;
             t1.material.metallic = 0.0f;
-            t1.material.roughness = 0.0f;
             t1.isEnvironment = true;
             sphereTriangles.push_back(t1);
             
@@ -201,7 +232,6 @@ vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, f
             t2.material.albedo = albedo;
             t2.material.emission = emission;
             t2.material.metallic = 0.0f;
-            t2.material.roughness = 0.0f;
             t2.isEnvironment = true;
             sphereTriangles.push_back(t2);
         }
@@ -209,8 +239,12 @@ vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, f
     return sphereTriangles;
 }
 
-// This render function maps the preallocated OpenGL PBO to a CUDA pointer and launches
-// the render kernel using the static device data.
+/**
+ * @brief Host-side render function that maps the CUDA-OpenGL PBO, launches the render kernel,
+ *        and unmaps the buffer. The kernel performs full path tracing using static device data.
+ *
+ * @param bvh The scene's bounding volume hierarchy used for acceleration.
+ */
 void renderHost(const BVH& bvh) {
     uchar4* d_pixels;
     size_t numBytes;

@@ -9,7 +9,20 @@
 #include "raytracer.h"
 #include <curand_kernel.h>
 
-// Check if a shadow ray is occluded (i.e. if any object is hit before reaching maxT).
+/**
+ * @brief Check if a shadow ray is occluded by any geometry before reaching its target.
+ *
+ * A ray is considered occluded if it intersects any triangle before reaching `maxT`.
+ * This is used to determine shadowing in direct lighting.
+ *
+ * @param ray: The shadow ray to test.
+ * @param maxT: The maximum distance the ray can travel before hitting the light.
+ * @param bvhNodes: The array of BVH nodes for spatial hierarchy traversal.
+ * @param triangleIndices: The index mapping to triangles within BVH leaves.
+ * @param triangles: The triangle geometry list.
+ * @param rootIndex: The root node index of the BVH.
+ * @return true if the ray is occluded; false if the path to the light is clear.
+ */
 __device__ inline bool isOccluded(const Ray &ray, float maxT,
                                   BVHNode *bvhNodes, int *triangleIndices, Triangle *triangles, int rootIndex) {
 
@@ -39,13 +52,29 @@ __device__ inline bool isOccluded(const Ray &ray, float maxT,
     return false;
 }
 
-// It gives a single-sample estimate of how much direct lighting a point receives from the environment's triangle lights
-// The probability density is assumed to be uniform over the list of lights and uniformly on the triangle
+/**
+ * @brief Estimate direct lighting at a surface point using one-sample Monte Carlo integration.
+ *
+ * It gives a single-sample estimate of how much direct lighting a point receives from the environment's triangle lights.
+ * The probability density is assumed to be uniform over the list of lights and uniformly on the triangle surface.
+ *
+ * @param hitPoint: The point on the surface being shaded.
+ * @param normal: The surface normal at the hit point.
+ * @param bvhNodes: The array of BVH nodes for scene geometry.
+ * @param triangleIndices: The triangle index mapping used by BVH leaves.
+ * @param triangles: All triangle geometry in the scene.
+ * @param rootIndex: Root node index of the BVH.
+ * @param lightTriangles: List of triangle lights in the scene.
+ * @param numLights: Total number of triangle lights.
+ * @param randState: Random number generator state for sampling.
+ * @return The estimated incoming radiance from direct lighting as a float3 RGB color.
+ */
 __device__ inline float3 sampleDirectLight(
     float3 hitPoint, float3 normal,
     BVHNode *bvhNodes, int *triangleIndices, Triangle *triangles, int rootIndex,
     Triangle *lightTriangles, int numLights,
     curandState *randState) {
+
     if (numLights == 0)
         return make_float3(0, 0, 0);
 
@@ -90,7 +119,6 @@ __device__ inline float3 sampleDirectLight(
     float3 crossProd = MathUtils::cross(edge1, edge2);
     float area = 0.5f * sqrtf(MathUtils::dot(crossProd, crossProd));
 
-    // pdf = (1/numLights) * (1/area)
     float pdf = (1.0f / numLights) * (1.0f / area);
 
     // Construct a shadow ray from the hit point toward the light sample

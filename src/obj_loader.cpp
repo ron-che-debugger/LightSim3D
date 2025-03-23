@@ -3,6 +3,17 @@
 
 using namespace std;
 
+/**
+ * @brief Load geometry from an OBJ file and convert it into a list of triangles.
+ *
+ * This function uses TinyObjLoader to parse an OBJ file and creates a triangle list suitable
+ * for ray tracing. Vertex positions are extracted, face normals are computed, and default
+ * material properties are applied to each triangle.
+ *
+ * @param filename Path to the OBJ file to be loaded.
+ * @param triangles Output list where the loaded triangles will be stored.
+ * @return True if the OBJ file is successfully loaded, false otherwise.
+ */
 bool loadOBJ(const string& filename, vector<Triangle>& triangles){
     tinyobj::attrib_t attrib;
     vector<tinyobj::shape_t> shapes;
@@ -18,7 +29,7 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
     for (const auto& shape : shapes){
         for (size_t i = 0; i < shape.mesh.indices.size(); i += 3){
             Triangle tri;
-            
+
             // Get indices for the triangle vertices.
             int idx0 = shape.mesh.indices[i + 0].vertex_index;
             int idx1 = shape.mesh.indices[i + 1].vertex_index;
@@ -29,13 +40,13 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
                 attrib.vertices[3 * idx0 + 1],
                 attrib.vertices[3 * idx0 + 2]
             );
-            
+
             tri.v1 = make_float3(
                 attrib.vertices[3 * idx1 + 0],
                 attrib.vertices[3 * idx1 + 1],
                 attrib.vertices[3 * idx1 + 2]
             );
-            
+
             tri.v2 = make_float3(
                 attrib.vertices[3 * idx2 + 0],
                 attrib.vertices[3 * idx2 + 1],
@@ -46,16 +57,13 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
             float3 edge1 = MathUtils::float3_subtract(tri.v1, tri.v0);
             float3 edge2 = MathUtils::float3_subtract(tri.v2, tri.v0);
             tri.normal = MathUtils::normalize(MathUtils::cross(edge1, edge2));
-            
-            // Set default material properties:
-            tri.material.albedo   = make_float3(1.0f, 1.0f, 1.0f); // Diffuse color
-            tri.material.metallic = 0.0f;                        // 0 = non-metal (like plastic), 1 = metal
-            tri.material.roughness= 0.5f;                        // 0 = perfect mirror, 1 = chalk
-            // No emission for object geometry
+
+            // Set default material properties
+            tri.material.albedo   = make_float3(1.0f, 1.0f, 1.0f);
+            tri.material.metallic = 0.0f;
             tri.material.emission = make_float3(0.0f, 0.0f, 0.0f);
-            // Mark as object geometry
             tri.isEnvironment = false;
-            
+
             triangles.push_back(tri);
         }
     }
@@ -63,7 +71,18 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
     return true;
 }
 
-// Helper function to update materials based on the selected effect.
+/**
+ * @brief Apply a rendering effect to object geometry based on the selected material style.
+ *
+ * This function modifies the material properties of non-emissive, non-environment triangles.
+ * Supported effects:
+ * - "metal": sets metallic = 1.0
+ * - "matte": sets metallic = 0.0
+ * - "default": sets metallic = 0.1
+ *
+ * @param triangles The triangle list to update.
+ * @param effect The name of the rendering effect to apply.
+ */
 void applyRenderingEffect(vector<Triangle>& triangles, const string &effect) {
     for (auto &tri : triangles) {
         // Only update non-environment and non-emissive (object) triangles.
@@ -74,14 +93,10 @@ void applyRenderingEffect(vector<Triangle>& triangles, const string &effect) {
 
             if (effect == "metal") {
                 tri.material.metallic = 1.0f;   // Fully metallic
-                tri.material.roughness = 0.2f;  // Lower roughness for a shinier look
             } else if (effect == "matte") {
                 tri.material.metallic = 0.0f;   // Purely diffuse
-                tri.material.roughness = 1.0f;  // Higher roughness gives a matte finish
             } else if (effect == "default") {
-                // Use default values (or leave unchanged)
                 tri.material.metallic = 0.1f;
-                tri.material.roughness = 0.5f;
             }
         }
     }

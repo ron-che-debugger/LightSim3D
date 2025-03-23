@@ -17,14 +17,20 @@ struct AABB {
 // BVH Node definition
 struct BVHNode {
     AABB bbox;
-    int left;  // Index of left child (if not a leaf)
-    int right; // Index of right child (if not a leaf)
-    int start; // Starting index in the triangle indices array (if leaf)
-    int count; // Number of triangles (if leaf)
+    int left;  /// Index of left child (if not a leaf)
+    int right; /// Index of right child (if not a leaf)
+    int start; /// Starting index in the triangle indices array (if leaf)
+    int count; /// Number of triangles (if leaf)
     bool isLeaf;
 };
 
-// Utility: compute the union of two AABBs
+/**
+ * @brief Compute the union of two axis-aligned bounding boxes (AABB).
+ *
+ * @param a: First bounding box.
+ * @param b: Second bounding box.
+ * @return A new AABB that tightly contains both input boxes.
+ */
 inline AABB unionAABB(const AABB &a, const AABB &b) {
     AABB ret;
     ret.min = make_float3(fminf(a.min.x, b.min.x),
@@ -36,7 +42,12 @@ inline AABB unionAABB(const AABB &a, const AABB &b) {
     return ret;
 }
 
-// Compute AABB for a triangle
+/**
+ * @brief Compute the axis-aligned bounding box (AABB) of a triangle.
+ *
+ * @param tri: The input triangle whose bounding box is to be computed.
+ * @return An AABB that encloses the triangle.
+ */
 inline AABB computeTriangleAABB(const Triangle &tri) {
     AABB box;
     box.min = MathUtils::float3_min(MathUtils::float3_min(tri.v0, tri.v1), tri.v2);
@@ -44,7 +55,12 @@ inline AABB computeTriangleAABB(const Triangle &tri) {
     return box;
 }
 
-// Compute centroid of a triangle
+/**
+ * @brief Compute the centroid (geometric center) of a triangle.
+ *
+ * @param tri: The input triangle.
+ * @return A float3 representing the centroid of the triangle.
+ */
 inline float3 computeCentroid(const Triangle &tri) {
     float3 sum = MathUtils::float3_add(MathUtils::float3_add(tri.v0, tri.v1), tri.v2);
     return MathUtils::float3_scale(sum, 1.0f / 3.0f);
@@ -54,10 +70,16 @@ inline float3 computeCentroid(const Triangle &tri) {
 struct BVH {
     vector<BVHNode> nodes;
     vector<int> triangleIndices;
-    int rootIndex; // index of the root node in nodes array
+    int rootIndex; /// Index of the root node in the nodes array
 };
 
-// Build BVH from a list of triangles; maxLeafSize determines when to stop splitting.
+/**
+ * @brief Construct a bounding volume hierarchy (BVH) from a list of triangles using recursive spatial partitioning.
+ *
+ * @param triangles: A vector of triangles used to construct the BVH.
+ * @param maxLeafSize: The maximum number of triangles a leaf node can contain before splitting. Default is 4.
+ * @return A BVH structure containing the hierarchy nodes and triangle index mapping.
+ */
 BVH buildBVH(const vector<Triangle> &triangles, int maxLeafSize = 4);
 
 #endif // BVH_H

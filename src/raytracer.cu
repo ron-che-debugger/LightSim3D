@@ -1,7 +1,14 @@
 #include "raytracer.h"
 #include "direct_light_sampling.h"
 
-// Inverse-rotate the ray from world space to object (local) space.
+/**
+ * @brief Transform a world-space ray into object (local) space using inverse rotation.
+ *
+ * @param worldRay The ray in world coordinates.
+ * @param yaw Yaw angle used to inverse-rotate.
+ * @param pitch Pitch angle used to inverse-rotate.
+ * @return The ray transformed to object space.
+ */
 __device__ __host__ Ray inverseRotateRay(const Ray& worldRay, float yaw, float pitch)
 {
     Ray localRay;
@@ -11,8 +18,14 @@ __device__ __host__ Ray inverseRotateRay(const Ray& worldRay, float yaw, float p
     return localRay;
 }
 
-// Standard triangle intersection (Möller–Trumbore) in object space.
-// Note: Removed per-triangle rotation. Triangles are assumed to be unrotated.
+/**
+ * @brief Test intersection between a ray and a triangle using Möller–Trumbore algorithm.
+ *
+ * @param ray The ray to test.
+ * @param tri The triangle.
+ * @param t Output hit distance.
+ * @return True if the ray hits the triangle.
+ */
 __device__ bool intersectTriangle(const Ray& ray, const Triangle& tri, float& t)
 {
     float3 edge1 = MathUtils::float3_subtract(tri.v1, tri.v0);
@@ -34,7 +47,15 @@ __device__ bool intersectTriangle(const Ray& ray, const Triangle& tri, float& t)
     return (t > 1e-6f);
 }
 
-// AABB intersection using the slab method. Assumes the ray is in object space.
+/**
+ * @brief Test intersection between a ray and an AABB using the slab method.
+ *
+ * @param ray The ray in object space.
+ * @param box The bounding box.
+ * @param t_min Minimum allowed t.
+ * @param t_max Maximum allowed t.
+ * @return True if the ray intersects the box.
+ */
 __device__ bool intersectAABB(const Ray &ray, AABB box, float t_min, float t_max)
 {
     for (int i = 0; i < 3; i++) {
@@ -80,7 +101,18 @@ __device__ bool intersectAABB(const Ray &ray, AABB box, float t_min, float t_max
     return true;
 }
 
-// Traverse the BVH in object space. The ray passed in is already inverse-rotated.
+/**
+ * @brief Traverse the BVH to find the closest triangle hit by a ray.
+ *
+ * @param ray Ray in object space.
+ * @param bvhNodes Pointer to BVH nodes.
+ * @param triangleIndices Triangle index lookup.
+ * @param triangles Scene geometry.
+ * @param rootIndex Index of BVH root node.
+ * @param closestT Output closest hit distance.
+ * @param hitTriangle Output triangle that was hit.
+ * @return True if any triangle was hit.
+ */
 __device__ bool traverseBVH(const Ray &ray, BVHNode* bvhNodes, int* triangleIndices,
                              Triangle* triangles, int rootIndex,
                              float &closestT, Triangle &hitTriangle)
@@ -114,6 +146,13 @@ __device__ bool traverseBVH(const Ray &ray, BVHNode* bvhNodes, int* triangleIndi
     return hit;
 }
 
+/**
+ * @brief Initializes CURAND random states for each pixel.
+ *
+ * @param randStates curandState array.
+ * @param width Image width.
+ * @param height Image height.
+ */
 __global__ void initRandomStates(curandState* randStates, int width, int height)
 {
     int x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -124,6 +163,13 @@ __global__ void initRandomStates(curandState* randStates, int width, int height)
     curand_init(1234, idx, 0, &randStates[idx]);
 }
 
+/**
+ * @brief Sample a cosine-weighted direction in the hemisphere around a surface normal.
+ *
+ * @param normal The surface normal.
+ * @param randState Random generator.
+ * @return A new sampled direction.
+ */
 __device__ float3 randomCosineWeightedHemisphere(float3 normal, curandState* randState)
 {
     float r1 = curand_uniform(randState);
@@ -143,7 +189,27 @@ __device__ float3 randomCosineWeightedHemisphere(float3 normal, curandState* ran
     return randomVec;
 }
 
-// Path tracing routine that now uses a simple PBR material model.
+/**
+ * @brief Recursive path tracer using simple PBR shading and next-event estimation.
+ *
+ * This integrator handles both diffuse and specular reflection based on the material's metallic property.
+ *
+ * - For matte (diffuse) surfaces, next-event estimation is used by directly sampling a light source.
+ * - For metallic (specular) surfaces, perfect mirror reflection is used with Fresnel scaling (Schlick's approximation).
+ *
+ * Russian roulette is applied after each bounce to probabilistically terminate low-contribution paths.
+ *
+ * @param ray Ray to trace (should be in object space).
+ * @param bvhNodes BVH structure.
+ * @param triangleIndices Triangle index buffer.
+ * @param triangles Scene geometry.
+ * @param rootIndex Index of root node in BVH.
+ * @param randState Random state for sampling.
+ * @param depth Maximum bounce depth.
+ * @param lightTriangles Emissive triangles in the scene.
+ * @param numLights Number of emissive triangles.
+ * @return Computed radiance for the input ray.
+ */
 __device__ float3 pathTrace(
     Ray ray,
     BVHNode* bvhNodes, int* triangleIndices, Triangle* triangles, int rootIndex,
@@ -229,7 +295,24 @@ __device__ float3 pathTrace(
     return color;
 }
 
-// Render kernel: transform the world-space ray into object space before tracing.
+/**
+ * @brief CUDA kernel that launches the path tracer for each pixel, handles camera orientation and anti-aliasing.
+ *
+ * @param pixels Output framebuffer.
+ * @param width Image width.
+ * @param height Image height.
+ * @param bvhNodes BVH node array.
+ * @param triangleIndices Triangle index array.
+ * @param triangles Geometry list.
+ * @param rootIndex Root BVH node index.
+ * @param randStates Per-pixel CURAND states.
+ * @param cameraPos World-space camera position.
+ * @param cameraDir Camera direction (unused here, but part of the interface).
+ * @param objectYaw Yaw rotation applied to scene.
+ * @param objectPitch Pitch rotation applied to scene.
+ * @param lightTriangles List of emissive triangles.
+ * @param numLights Number of lights.
+ */
 __global__ void renderKernel(uchar4* pixels, int width, int height,
     BVHNode* bvhNodes, int* triangleIndices, Triangle* triangles, int rootIndex,
     curandState* randStates,
