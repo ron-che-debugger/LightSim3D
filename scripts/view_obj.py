@@ -1,11 +1,21 @@
+#!/usr/bin/env python3
+"""
+plot_obj.py
+
+Load & visualize an OBJ file that may contain triangles or quads.
+If a face has 4 vertices, it is split into two triangles.
+
+Usage:
+    python plot_obj.py my_model.obj
+"""
+
 import argparse
-import trimesh
 import matplotlib.pyplot as plt
-import io
 
 def load_obj(path):
-    verts = []
-    faces = []
+    """ Load an OBJ file, supporting triangular or quad faces. """
+    vertices = []
+    triangles = []
     with open(path, 'r') as f:
         for line in f:
             # Remove inline comments and whitespace
@@ -15,24 +25,43 @@ def load_obj(path):
 
             parts = line.split()
             if parts[0] == 'v':
-                verts.append(list(map(float, parts[1:])))
+                # OBJ vertex line -> store as float [x, y, z]
+                vertices.append(list(map(float, parts[1:])))
             elif parts[0] == 'f':
-                # OBJ faces are 1‑indexed — convert to 0‑indexed
-                faces.append([int(idx.split('/')[0]) - 1 for idx in parts[1:]])
-    return verts, faces
+                # Convert OBJ's 1-based indices to 0-based
+                face_indices = [int(idx.split('/')[0]) - 1 for idx in parts[1:]]
+
+                # Triangular face
+                if len(face_indices) == 3:
+                    triangles.append(face_indices)
+                # Quad face -> split into two triangles
+                elif len(face_indices) == 4:
+                    a, b, c, d = face_indices
+                    triangles.append([a, b, c])
+                    triangles.append([a, c, d])
+                else:
+                    # For faces with more than 4 vertices, you'd need a more general polygon triangulation.
+                    # Here we simply skip them or raise an error:
+                    print(f"Warning: skipping face with {len(face_indices)} vertices.")
+                    continue
+    return vertices, triangles
 
 def plot_mesh(vertices, faces):
-    """ Plot a 3D mesh using matplotlib """
-    fig = plt.figure(figsize=(6,6))
+    """
+    Plot a 3D mesh using matplotlib's plot_trisurf.
+    'faces' must be a list of triangle indices (3-element lists).
+    """
+    fig = plt.figure(figsize=(6, 6))
     ax = fig.add_subplot(111, projection='3d')
+    # *zip(*vertices) unpacks the vertex list into x, y, z for plotting
     ax.plot_trisurf(*zip(*vertices), triangles=faces, color='cyan', edgecolor='black')
-    ax.set_box_aspect((1,1,1))
+    ax.set_box_aspect((1, 1, 1))
     plt.title("OBJ Mesh Preview")
     plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Load & visualize an OBJ file — safely ignores '#' comment lines"
+        description="Load & visualize an OBJ file — supports triangles and quads."
     )
     parser.add_argument("file_path", help="Path to the OBJ file")
     args = parser.parse_args()
