@@ -1,5 +1,16 @@
 #include "bvh.h"
 
+/**
+ * @file bvh.cpp
+ * @brief Implements recursive construction of a bounding volume hierarchy (BVH) for triangle meshes.
+ *
+ * The BVH is built by partitioning triangles based on the spatial distribution of their centroids.
+ * Each node in the hierarchy stores an axis-aligned bounding box (AABB) that encloses either a set
+ * of primitives (leaf node) or two child nodes (internal node).
+ *
+ * The splitting axis is chosen based on the maximum extent of the centroid bounding box.
+ * This structure accelerates ray-triangle intersection tests in ray tracing.
+ */
 namespace {
 
 /**

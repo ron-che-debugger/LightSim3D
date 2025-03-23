@@ -1,3 +1,19 @@
+/**
+ * @file raytracer.cu
+ * @brief Implements CUDA-based path tracing with BVH traversal, PBR shading, and direct lighting.
+ *
+ * This file includes:
+ * - Ray-triangle and ray-AABB intersection routines
+ * - BVH traversal to find closest hits
+ * - Cosine-weighted hemisphere sampling for diffuse materials
+ * - Perfect mirror reflection for specular (metallic) materials
+ * - Next-event estimation for direct lighting via triangle lights
+ * - Russian roulette for probabilistic path termination
+ * - Anti-aliasing via jittered sampling in the camera space
+ *
+ * The main entry point is `renderKernel`, which computes color for each pixel by tracing
+ * multiple rays per pixel and integrating light contributions through recursive bounces.
+ */
 #include "raytracer.h"
 #include "direct_light_sampling.h"
 

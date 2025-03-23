@@ -1,6 +1,18 @@
 #ifndef RAYTRACER_H
 #define RAYTRACER_H
 
+/**
+ * @file raytracer.h
+ * @brief Core intersection routines and CUDA kernel for GPU-based path tracing.
+ *
+ * Includes:
+ * - Ray-triangle and ray-AABB intersection tests
+ * - Random state initialization for per-pixel sampling
+ * - CUDA kernel that computes the final pixel color using BVH-accelerated path tracing
+ *
+ * Each pixel color is estimated by tracing rays from the camera into the scene
+ * and evaluating light transport through direct and indirect illumination.
+ */
 #include "bvh.h"
 #include "math_utils.h"
 #include "obj_loader.h"

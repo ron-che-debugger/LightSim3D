@@ -1,6 +1,16 @@
 #ifndef BVH_H
 #define BVH_H
 
+/**
+ * @file bvh.h
+ * @brief Defines data structures and utility functions for constructing a bounding volume hierarchy (BVH).
+ *
+ * This header provides:
+ * - Axis-Aligned Bounding Box (AABB) definition and operations
+ * - BVH node structure for acceleration of ray-primitive intersections
+ * - Utility functions for bounding box computation and triangle centroid calculation
+ * - Interface to construct a BVH from a triangle mesh
+ */
 #include "math_utils.h"
 #include "obj_loader.h"
 #include <algorithm>

@@ -1,4 +1,13 @@
 #define TINYOBJLOADER_IMPLEMENTATION
+
+/**
+ * @file obj_loader.cpp
+ * @brief Implements mesh loading from OBJ files and material effect application for rendering.
+ *
+ * Uses TinyObjLoader to parse geometry data and converts it into a list of triangles with
+ * computed normals and default PBR material settings. Also supports basic material overrides
+ * for visual debugging or styling (e.g., matte, metal).
+ */
 #include "obj_loader.h"
 
 using namespace std;

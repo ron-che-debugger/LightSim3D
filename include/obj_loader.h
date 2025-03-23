@@ -1,6 +1,16 @@
 #ifndef OBJ_LOADER_H
 #define OBJ_LOADER_H
 
+/**
+ * @file obj_loader.h
+ * @brief Provides structures and utilities for loading and manipulating triangle meshes from OBJ files.
+ *
+ * Defines the Triangle primitive used in rendering, and functions for:
+ * - Parsing OBJ files into Triangle data with normals and materials
+ * - Applying global rendering effects to the scene (e.g., for testing or visualization)
+ *
+ * Integrates with `tinyobjloader` for mesh parsing and supports PBR-ready materials.
+ */
 #include "material.h"
 #include "math_utils.h"
 #include "tiny_obj_loader.h"

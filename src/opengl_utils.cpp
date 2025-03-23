@@ -1,3 +1,15 @@
+/**
+ * @file opengl_utils.cpp
+ * @brief Implements OpenGL window setup, user input handling, and CUDA-OpenGL interoperability.
+ *
+ * This module handles:
+ * - OpenGL context setup with GLFW and GLEW
+ * - Camera and object control via keyboard and mouse input
+ * - CUDA-OpenGL interop using pixel buffer objects (PBO)
+ * - Input callbacks for real-time interaction
+ *
+ * Enables real-time interactive rendering and camera movement in the ray tracer.
+ */
 #include "opengl_utils.h"
 
 using namespace std;

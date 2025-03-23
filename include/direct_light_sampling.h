@@ -1,6 +1,16 @@
 #ifndef DIRECT_LIGHT_SAMPLING_H
 #define DIRECT_LIGHT_SAMPLING_H
 
+/**
+ * @file direct_light_sampling.h
+ * @brief Implements direct lighting estimation using triangle lights and BVH-based visibility checks.
+ *
+ * This header provides device-side functions for:
+ * - Shadow ray occlusion testing using BVH traversal.
+ * - Monte Carlo sampling of triangle lights for estimating direct illumination.
+ *
+ * Used in GPU ray tracers to compute realistic lighting from emissive surfaces.
+ */
 #include "bvh.h"
 #include "math_utils.h"
 #include "obj_loader.h"

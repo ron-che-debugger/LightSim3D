@@ -1,6 +1,16 @@
 #ifndef PBR_UTILS_H
 #define PBR_UTILS_H
 
+/**
+ * @file pbr_utils.h
+ * @brief Utility functions for physically based rendering (PBR) in CUDA.
+ *
+ * Provides:
+ * - Reflection vector computation using surface normals
+ * - Fresnel term estimation using Schlick's approximation
+ *
+ * These are commonly used in specular reflection and material response models.
+ */
 #include "material.h"
 #include "math_utils.h"
 #include <curand_kernel.h>

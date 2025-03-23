@@ -1,6 +1,17 @@
 #ifndef MATH_UTILS_H
 #define MATH_UTILS_H
 
+/**
+ * @file math_utils.h
+ * @brief Common vector math operations for float3, used in CUDA-based rendering and geometry processing.
+ *
+ * Provides device- and host-compatible utility functions for:
+ * - Vector arithmetic and algebra (dot, cross, normalize, add, subtract, etc.)
+ * - Component-wise min/max and scaling
+ * - Coordinate system rotation (yaw/pitch and their inverse)
+ *
+ * All functions are inlined and suitable for use in both CPU and GPU code.
+ */
 #include <cuda_runtime.h>
 
 #ifndef M_PI

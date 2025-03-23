@@ -1,6 +1,16 @@
 #ifndef RAY_H
 #define RAY_H
 
+/**
+ * @file ray.h
+ * @brief Defines the Ray structure for ray tracing operations in 3D space.
+ *
+ * Provides a lightweight ray representation with:
+ * - Origin and normalized direction
+ * - Point evaluation along the ray (origin + t * direction)
+ *
+ * Used throughout intersection and shading routines in CUDA-based renderers.
+ */
 #include "math_utils.h"
 #include <cuda_runtime.h>
 

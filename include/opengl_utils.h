@@ -1,6 +1,18 @@
 #ifndef OPENGL_UTILS_H
 #define OPENGL_UTILS_H
 
+/**
+ * @file opengl_utils.h
+ * @brief Utility functions and global state for OpenGL windowing, input handling, and CUDA interop.
+ *
+ * Provides:
+ * - OpenGL context setup with GLFW and GLEW
+ * - Camera and object control via keyboard and mouse input
+ * - CUDA-OpenGL interop using pixel buffer objects (PBO)
+ * - Input callbacks for real-time interaction
+ *
+ * Used to display CUDA-rendered frames and enable interactive navigation.
+ */
 #include "math_utils.h"
 #include <GLEW/glew.h>
 #include <GLFW/glfw3.h>
