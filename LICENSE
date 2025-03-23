@@ -1,0 +1,12 @@
+## Author
+
+This project was developed by **Ronghan** in 2025 as a high-performance, GPU-accelerated raytracer that leverages CUDA and OpenGL interop. It implements advanced rendering techniques such as:
+
+- **BVH Acceleration**: Efficiently traverses scene geometry with a Bounding Volume Hierarchy.
+- **Physically-Based Rendering (PBR)**: Realistic material modeling including diffuse, specular, and emissive components.
+- **Direct Light Sampling & Monte Carlo Integration**: For robust global illumination and realistic lighting.
+- **OBJ Importing & Environment Mapping**: Loads complex 3D models and utilizes environment spheres for lighting.
+
+This modular project is designed for real-time rendering and experimentation with cutting-edge graphics algorithms. Contributions, feedback, and collaborations are welcome!
+
+For inquiries, please contact me at [ronghanche@gmail.com].
