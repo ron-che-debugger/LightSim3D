@@ -105,7 +105,7 @@ void applyRenderingEffect(vector<Triangle>& triangles, const string &effect) {
             } else if (effect == "matte") {
                 tri.material.metallic = 0.0f;   // Purely diffuse
             } else if (effect == "default") {
-                tri.material.metallic = 0.7f;
+                tri.material.metallic = 0.9f;
             }
         }
     }
