@@ -5,6 +5,7 @@ NVCC = "D:/External Installations/bin/nvcc.exe"
 CUDA_ARCH = -gencode=arch=compute_52,code=\"sm_52,compute_52\"
 
 # Include directories
+# Replace "D:/External Installations/include" with your local CUDA installation directory
 INCLUDES = -I"./include" \
            -I"D:/External Installations/include" \
            -I"D:/External_Apps/GLEW/include" \
