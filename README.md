@@ -25,20 +25,9 @@
 ## Demo
 The demos below showcase a single scene composed of [`three cubes`](assets/mul_cubes.obj) rendered with different material effects, though users are free to render any objects of their choice. Notice how the matte rendering effectively mimics shadowing from occlusions, while the metallic surface is purely specular and fully reflects the environment lighting.
 
-
-<div style="display: flex; gap: 20px; align-items: center;">
-
-  <div>
-    <strong>Matte Rendering Effect:</strong><br/>
-    <img src="demo/cubes_matte.gif" alt="Matte Rendering" width="300"/>
-  </div>
-
-  <div>
-    <strong>Metallic Rendering Effect:</strong><br/>
-    <img src="demo/cubes_metal.gif" alt="Metallic Rendering" width="300"/>
-  </div>
-
-</div>
+| **Matte Rendering Effect** | **Metallic Rendering Effect** |
+|----------------------------|-------------------------------|
+| <img src="demo/cubes_matte.gif" alt="Matte Rendering" width="300"/> | <img src="demo/cubes_metal.gif" alt="Metallic Rendering" width="300"/> |
 
 ## Installation
 - Prerequisites
@@ -50,7 +39,7 @@ The demos below showcase a single scene composed of [`three cubes`](assets/mul_c
 - Build 
   - Clone the repository:
     ```bash
-    git clone https://github.com/ron-che-debugge/LightSim3D.git
+    git clone https://github.com/ron-che-debugger/LightSim3D.git
     cd LightSim3D
     ```
   - Then simply run:
@@ -62,7 +51,7 @@ The demos below showcase a single scene composed of [`three cubes`](assets/mul_c
 
 ## Usage Instructions
 - Pre-rendering asset preparation
-    - **LightSim3D**  employs global emission rendering—especially through its environment sphere—to deliver realistic lighting. To ensure accurate light contribution, all object faces must be outward-oriented. 
+    - **LightSim3D**  employs global emission rendering—through its environment sphere—to deliver realistic lighting. To ensure accurate light contribution, all object faces must be outward-oriented. 
     The provided [`fix_obj_normals.py`](utils/fix_obj_normals.py) script pre-processes your OBJ files by: 
       - Computing the object centroid.
       - Determining face normals using fan triangulation.  
@@ -72,7 +61,7 @@ The demos below showcase a single scene composed of [`three cubes`](assets/mul_c
         python fix_obj_normals.py input.obj output.obj
         ```
 - Launch raytracer 
-    - Launch with the equired OBJ file path. Optionally, specify the window resolution and desired material effect:  
+    - Launch with the required OBJ file path. Optionally, specify the window resolution and desired material effect:  
         ```bash
         ./raytracer path/to/model.obj <width> <height> <effect>
         ```
