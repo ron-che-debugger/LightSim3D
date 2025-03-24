@@ -11,16 +11,15 @@
 **LightSim3D** implements a complete rendering pipeline to load OBJ files, build an efficient BVH (Bounding Volume Hierarchy) for acceleration, and perform real-time path tracing using CUDA. The project features physically based rendering (PBR), direct light sampling, and interactive controls—all integrated with OpenGL for display.
 
 ## Features
-- GPU-Accelerated Path Tracing: Leverages NVIDIA CUDA for high-performance raytracing.
+- GPU-Accelerated Monte Carlo Path Tracing: Leverages NVIDIA CUDA to perform efficient Monte Carlo integration. By recursively tracing rays with random sampling (e.g., cosine-weighted hemisphere for diffuse surfaces and perfect mirror reflection for specular surfaces), the GPU handles complex global illumination effects—such as soft shadows, indirect lighting, and reflections—at interactive speeds. 
 - BVH Acceleration: Utilizes a bounding volume hierarchy for efficient ray-primitive intersection tests.
+- Environment Lighting: Includes an encompassing environment sphere for realistic global illumination.
+- Direct Light Sampling: Uses next-event estimation to directly sample emissive triangles, reducing noise and improving convergence when calculating direct illumination.
 - Physically Based Rendering (PBR): Supports materials with adjustable albedo, metallicity, and emission.
-- Direct Light Sampling: Employs next-event estimation to compute direct lighting without duplication of effort.
-- OBJ File Importing: Loads complex 3D scenes using [TinyObjLoader](https://github.com/tinyobjloader/tinyobjloader/blob/release/tiny_obj_loader.h).
+- Rendering Effects: Switch between different material effects (e.g., metal, matte, default) via command-line arguments.
 - Interactive Controls:
     - Camera Movement: Use W/A/S/D keys to move, Space/Left Shift for vertical movement.
     - Mouse Rotation: Rotate the scene with the mouse. Press Escape to unlock the cursor and Left Mouse Button to re-lock.
-- Rendering Effects: Switch between different material effects (e.g., metal, matte, default) via command-line arguments.
-- Environment Lighting: Includes an encompassing environment sphere for realistic global illumination.
 
 ## Demo
 The demos below showcase a single scene composed of [`three cubes`](assets/mul_cubes.obj) rendered with different material effects, though users are free to render any objects of their choice. Notice how the matte rendering effectively mimics shadowing from occlusions, while the metallic surface is purely specular and fully reflects the environment lighting.
