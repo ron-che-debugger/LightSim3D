@@ -23,20 +23,20 @@ using namespace std;
  * @param triangles Output list where the loaded triangles will be stored.
  * @return True if the OBJ file is successfully loaded, false otherwise.
  */
-bool loadOBJ(const string& filename, vector<Triangle>& triangles){
+bool loadOBJ(const string &filename, vector<Triangle> &triangles) {
     tinyobj::attrib_t attrib;
     vector<tinyobj::shape_t> shapes;
     vector<tinyobj::material_t> materials;
     string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename.c_str())){
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename.c_str())) {
         cerr << "Error loading OBJ: " << err << endl;
         return false;
     }
 
     // Convert OBJ faces into triangles
-    for (const auto& shape : shapes){
-        for (size_t i = 0; i < shape.mesh.indices.size(); i += 3){
+    for (const auto &shape : shapes) {
+        for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
             Triangle tri;
 
             // Get indices for the triangle vertices.
@@ -47,20 +47,17 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
             tri.v0 = make_float3(
                 attrib.vertices[3 * idx0 + 0],
                 attrib.vertices[3 * idx0 + 1],
-                attrib.vertices[3 * idx0 + 2]
-            );
+                attrib.vertices[3 * idx0 + 2]);
 
             tri.v1 = make_float3(
                 attrib.vertices[3 * idx1 + 0],
                 attrib.vertices[3 * idx1 + 1],
-                attrib.vertices[3 * idx1 + 2]
-            );
+                attrib.vertices[3 * idx1 + 2]);
 
             tri.v2 = make_float3(
                 attrib.vertices[3 * idx2 + 0],
                 attrib.vertices[3 * idx2 + 1],
-                attrib.vertices[3 * idx2 + 2]
-            );
+                attrib.vertices[3 * idx2 + 2]);
 
             // Compute the triangle’s face normal (assumes counterclockwise winding).
             float3 edge1 = MathUtils::float3_subtract(tri.v1, tri.v0);
@@ -68,7 +65,7 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
             tri.normal = MathUtils::normalize(MathUtils::cross(edge1, edge2));
 
             // Set default material properties
-            tri.material.albedo   = make_float3(1.0f, 1.0f, 1.0f);
+            tri.material.albedo = make_float3(1.0f, 1.0f, 1.0f);
             tri.material.metallic = 0.0f;
             tri.material.emission = make_float3(0.0f, 0.0f, 0.0f);
             tri.isEnvironment = false;
@@ -92,7 +89,7 @@ bool loadOBJ(const string& filename, vector<Triangle>& triangles){
  * @param triangles The triangle list to update.
  * @param effect The name of the rendering effect to apply.
  */
-void applyRenderingEffect(vector<Triangle>& triangles, const string &effect) {
+void applyRenderingEffect(vector<Triangle> &triangles, const string &effect) {
     for (auto &tri : triangles) {
         // Only update non-environment and non-emissive (object) triangles.
         if (!tri.isEnvironment &&
@@ -101,9 +98,9 @@ void applyRenderingEffect(vector<Triangle>& triangles, const string &effect) {
             tri.material.emission.z == 0.0f) {
 
             if (effect == "metal") {
-                tri.material.metallic = 1.0f;   // Fully metallic
+                tri.material.metallic = 1.0f; // Fully metallic
             } else if (effect == "matte") {
-                tri.material.metallic = 0.0f;   // Purely diffuse
+                tri.material.metallic = 0.0f; // Purely diffuse
             } else if (effect == "default") {
                 tri.material.metallic = 0.9f;
             }

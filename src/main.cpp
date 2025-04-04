@@ -1,15 +1,15 @@
-#include "obj_loader.h"
-#include "raytracer.h"
-#include "math_utils.h"
-#include "opengl_utils.h"
 #include "bvh.h"
+#include "math_utils.h"
+#include "obj_loader.h"
+#include "opengl_utils.h"
+#include "raytracer.h"
 #include <GLEW/glew.h>
 #include <GLFW/glfw3.h>
-#include <cuda_runtime.h>
+#include <cstdlib>
 #include <cuda_gl_interop.h>
+#include <cuda_runtime.h>
 #include <iostream>
 #include <vector>
-#include <cstdlib>
 
 using namespace std;
 
@@ -18,17 +18,17 @@ int width = 800;
 int height = 600;
 
 // Device pointers for static scene data
-Triangle* d_triangles = nullptr;
-BVHNode* d_bvhNodes = nullptr;
-int* d_triangleIndices = nullptr;
-curandState* d_randStates = nullptr;
-Triangle* d_lightTriangles = nullptr;  
-int d_numLights = 0; 
+Triangle *d_triangles = nullptr;
+BVHNode *d_bvhNodes = nullptr;
+int *d_triangleIndices = nullptr;
+curandState *d_randStates = nullptr;
+Triangle *d_lightTriangles = nullptr;
+int d_numLights = 0;
 
 // Forward declarations
-void initDeviceMemory(const vector<Triangle>& h_triangles, const BVH& bvh);
+void initDeviceMemory(const vector<Triangle> &h_triangles, const BVH &bvh);
 vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, float3 emission, float3 albedo);
-void renderHost(const BVH& bvh);
+void renderHost(const BVH &bvh);
 
 /**
  * @brief Entry point for the CUDA path tracer.
@@ -40,7 +40,7 @@ void renderHost(const BVH& bvh);
  * @param argv Argument values. Usage: ./raytracer <obj_file> [width height] [effect]
  * @return Exit code (0 on success, -1 on failure).
  */
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     if (argc < 2) {
         cerr << "Usage: ./raytracer <path-to-obj> [width height]" << endl;
         return -1;
@@ -65,13 +65,13 @@ int main(int argc, char** argv) {
         cerr << "Failed to load OBJ file!" << endl;
         return -1;
     }
-    
+
     // Apply the chosen rendering effect to object materials.
     applyRenderingEffect(h_triangles, effect);
-    
+
     // Create environment geometry (a large sphere that encloses the scene)
-    float envRadius = 100.0f;    
-    int envRings = 2;           
+    float envRadius = 100.0f;
+    int envRings = 2;
     int envSectors = 4;
     float3 envEmission = make_float3(1.0, 1.0f, 1.0f); // Emission intensity/color for the environment
     float3 envAlbedo = make_float3(1.0f, 1.0f, 1.0f);
@@ -79,13 +79,13 @@ int main(int argc, char** argv) {
 
     // Append environment triangles to the scene
     h_triangles.insert(h_triangles.end(), envTriangles.begin(), envTriangles.end());
-    
+
     // Build the BVH for the loaded triangles (only once)
     BVH bvh = buildBVH(h_triangles);
 
     // Initialize OpenGL (and create the PBO, etc.)
     initOpenGL();
-    GLFWwindow* window = glfwGetCurrentContext();
+    GLFWwindow *window = glfwGetCurrentContext();
 
     // Allocate and initialize all static device memory once
     initDeviceMemory(h_triangles, bvh);
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
     // Main rendering loop
     while (!glfwWindowShouldClose(window)) {
         updateCamera(window);
-        
+
         // Render using preallocated static scene data
         renderHost(bvh);
 
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
  * @param h_triangles Host-side triangle geometry.
  * @param bvh The precomputed BVH structure.
  */
-void initDeviceMemory(const vector<Triangle>& h_triangles, const BVH& bvh) {
+void initDeviceMemory(const vector<Triangle> &h_triangles, const BVH &bvh) {
     // Allocate and copy triangles.
     cudaMalloc(&d_triangles, h_triangles.size() * sizeof(Triangle));
     cudaMemcpy(d_triangles, h_triangles.data(), h_triangles.size() * sizeof(Triangle), cudaMemcpyHostToDevice);
@@ -181,11 +181,11 @@ void initDeviceMemory(const vector<Triangle>& h_triangles, const BVH& bvh) {
 vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, float3 emission, float3 albedo) {
     vector<Triangle> sphereTriangles;
     vector<float3> vertices;
-    
+
     // Generate vertices for a UV sphere
-    for (int i = 0; i <= rings; i++) { // Horizontal divisions
-        float theta = i * M_PI / rings;  // [0, pi]
-        for (int j = 0; j <= sectors; j++) { // Vertical divisions
+    for (int i = 0; i <= rings; i++) {             // Horizontal divisions
+        float theta = i * M_PI / rings;            // [0, pi]
+        for (int j = 0; j <= sectors; j++) {       // Vertical divisions
             float phi = j * 2.0f * M_PI / sectors; // [0, 2pi]
             float x = radius * sinf(theta) * cosf(phi);
             float y = radius * cosf(theta);
@@ -193,13 +193,13 @@ vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, f
             vertices.push_back(make_float3(x, y, z));
         }
     }
-    
+
     // Create triangles for each quad on the sphere surface
     for (int i = 0; i < rings; i++) {
         for (int j = 0; j < sectors; j++) {
             int first = i * (sectors + 1) + j;
             int second = first + sectors + 1;
-            
+
             // Triangle 1
             Triangle t1;
             t1.v0 = vertices[first];
@@ -217,7 +217,7 @@ vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, f
             t1.material.metallic = 0.0f;
             t1.isEnvironment = true;
             sphereTriangles.push_back(t1);
-            
+
             // Triangle 2
             Triangle t2;
             t2.v0 = vertices[second];
@@ -245,11 +245,11 @@ vector<Triangle> createEnvironmentSphere(float radius, int rings, int sectors, f
  *
  * @param bvh The scene's bounding volume hierarchy used for acceleration.
  */
-void renderHost(const BVH& bvh) {
-    uchar4* d_pixels;
+void renderHost(const BVH &bvh) {
+    uchar4 *d_pixels;
     size_t numBytes;
     cudaGraphicsMapResources(1, &cudaPBOResource, 0);
-    cudaGraphicsResourceGetMappedPointer((void**)&d_pixels, &numBytes, cudaPBOResource);
+    cudaGraphicsResourceGetMappedPointer((void **)&d_pixels, &numBytes, cudaPBOResource);
 
     dim3 blockSize(16, 16);
     dim3 gridSize((width + blockSize.x - 1) / blockSize.x,

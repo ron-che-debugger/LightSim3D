@@ -14,8 +14,8 @@
  * The main entry point is `renderKernel`, which computes color for each pixel by tracing
  * multiple rays per pixel and integrating light contributions through recursive bounces.
  */
-#include "raytracer.h"
 #include "direct_light_sampling.h"
+#include "raytracer.h"
 
 /**
  * @brief Transform a world-space ray into object (local) space using inverse rotation.
@@ -25,10 +25,9 @@
  * @param pitch Pitch angle used to inverse-rotate.
  * @return The ray transformed to object space.
  */
-__device__ __host__ Ray inverseRotateRay(const Ray& worldRay, float yaw, float pitch)
-{
+__device__ __host__ Ray inverseRotateRay(const Ray &worldRay, float yaw, float pitch) {
     Ray localRay;
-    localRay.origin    = MathUtils::rotateInverse(worldRay.origin,    yaw, pitch);
+    localRay.origin = MathUtils::rotateInverse(worldRay.origin, yaw, pitch);
     localRay.direction = MathUtils::rotateInverse(worldRay.direction, yaw, pitch);
     localRay.direction = MathUtils::normalize(localRay.direction);
     return localRay;
@@ -42,23 +41,25 @@ __device__ __host__ Ray inverseRotateRay(const Ray& worldRay, float yaw, float p
  * @param t Output hit distance.
  * @return True if the ray hits the triangle.
  */
-__device__ bool intersectTriangle(const Ray& ray, const Triangle& tri, float& t)
-{
+__device__ bool intersectTriangle(const Ray &ray, const Triangle &tri, float &t) {
     float3 edge1 = MathUtils::float3_subtract(tri.v1, tri.v0);
     float3 edge2 = MathUtils::float3_subtract(tri.v2, tri.v0);
     float3 h = MathUtils::cross(ray.direction, edge2);
     float a = MathUtils::dot(edge1, h);
-    if (fabs(a) < 1e-6f) return false;
-    
+    if (fabs(a) < 1e-6f)
+        return false;
+
     float f = 1.0f / a;
     float3 s = MathUtils::float3_subtract(ray.origin, tri.v0);
     float u = f * MathUtils::dot(s, h);
-    if (u < 0.0f || u > 1.0f) return false;
-    
+    if (u < 0.0f || u > 1.0f)
+        return false;
+
     float3 q = MathUtils::cross(s, edge1);
     float v = f * MathUtils::dot(ray.direction, q);
-    if (v < 0.0f || (u + v) > 1.0f) return false;
-    
+    if (v < 0.0f || (u + v) > 1.0f)
+        return false;
+
     t = f * MathUtils::dot(edge2, q);
     return (t > 1e-6f);
 }
@@ -72,8 +73,7 @@ __device__ bool intersectTriangle(const Ray& ray, const Triangle& tri, float& t)
  * @param t_max Maximum allowed t.
  * @return True if the ray intersects the box.
  */
-__device__ bool intersectAABB(const Ray &ray, AABB box, float t_min, float t_max)
-{
+__device__ bool intersectAABB(const Ray &ray, AABB box, float t_min, float t_max) {
     for (int i = 0; i < 3; i++) {
         float origin, dir, minVal, maxVal;
         if (i == 0) {
@@ -129,16 +129,15 @@ __device__ bool intersectAABB(const Ray &ray, AABB box, float t_min, float t_max
  * @param hitTriangle Output triangle that was hit.
  * @return True if any triangle was hit.
  */
-__device__ bool traverseBVH(const Ray &ray, BVHNode* bvhNodes, int* triangleIndices,
-                             Triangle* triangles, int rootIndex,
-                             float &closestT, Triangle &hitTriangle)
-{
+__device__ bool traverseBVH(const Ray &ray, BVHNode *bvhNodes, int *triangleIndices,
+                            Triangle *triangles, int rootIndex,
+                            float &closestT, Triangle &hitTriangle) {
     bool hit = false;
     const int stackSize = 64;
     int stack[stackSize];
     int stackPtr = 0;
     stack[stackPtr++] = rootIndex;
-    
+
     while (stackPtr > 0) {
         int nodeIndex = stack[--stackPtr];
         BVHNode node = bvhNodes[nodeIndex];
@@ -155,8 +154,10 @@ __device__ bool traverseBVH(const Ray &ray, BVHNode* bvhNodes, int* triangleIndi
                 }
             }
         } else {
-            if (node.left != -1) stack[stackPtr++] = node.left;
-            if (node.right != -1) stack[stackPtr++] = node.right;
+            if (node.left != -1)
+                stack[stackPtr++] = node.left;
+            if (node.right != -1)
+                stack[stackPtr++] = node.right;
         }
     }
     return hit;
@@ -169,11 +170,11 @@ __device__ bool traverseBVH(const Ray &ray, BVHNode* bvhNodes, int* triangleIndi
  * @param width Image width.
  * @param height Image height.
  */
-__global__ void initRandomStates(curandState* randStates, int width, int height)
-{
+__global__ void initRandomStates(curandState *randStates, int width, int height) {
     int x = blockDim.x * blockIdx.x + threadIdx.x;
     int y = blockDim.y * blockIdx.y + threadIdx.y;
-    if (x >= width || y >= height) return;
+    if (x >= width || y >= height)
+        return;
 
     int idx = y * width + x;
     curand_init(1234, idx, 0, &randStates[idx]);
@@ -186,22 +187,21 @@ __global__ void initRandomStates(curandState* randStates, int width, int height)
  * @param randState Random generator.
  * @return A new sampled direction.
  */
-__device__ float3 randomCosineWeightedHemisphere(float3 normal, curandState* randState)
-{
+__device__ float3 randomCosineWeightedHemisphere(float3 normal, curandState *randState) {
     float r1 = curand_uniform(randState);
     float r2 = curand_uniform(randState);
-    
+
     float theta = acosf(sqrtf(1.0f - r1));
     float phi = 2.0f * M_PI * r2;
-    
+
     float x = sinf(theta) * cosf(phi);
     float y = sinf(theta) * sinf(phi);
     float z = cosf(theta);
-    
+
     float3 randomVec = make_float3(x, y, z);
     if (MathUtils::dot(randomVec, normal) < 0.0f)
         randomVec = MathUtils::float3_scale(randomVec, -1.0f);
-    
+
     return randomVec;
 }
 
@@ -228,28 +228,27 @@ __device__ float3 randomCosineWeightedHemisphere(float3 normal, curandState* ran
  */
 __device__ float3 pathTrace(
     Ray ray,
-    BVHNode* bvhNodes, int* triangleIndices, Triangle* triangles, int rootIndex,
-    curandState* randState, int depth,
-    Triangle* lightTriangles, int numLights)
-{
+    BVHNode *bvhNodes, int *triangleIndices, Triangle *triangles, int rootIndex,
+    curandState *randState, int depth,
+    Triangle *lightTriangles, int numLights) {
     float3 color = make_float3(0, 0, 0);
     float3 throughput = make_float3(1, 1, 1);
-    
+
     for (int i = 0; i < depth; i++) {
         float closestT = 1e20f;
         Triangle hitTriangle;
         bool hit = traverseBVH(ray, bvhNodes, triangleIndices, triangles, rootIndex, closestT, hitTriangle);
-        
+
         /** Unnecessary since we have an environment sphere, each ray hits something eventually
          * if (!hit) {
-            color = MathUtils::float3_multiply(throughput, make_float3(0.5f, 0.7f, 1.0f)); // Uniform sky blue 
+            color = MathUtils::float3_multiply(throughput, make_float3(0.5f, 0.7f, 1.0f)); // Uniform sky blue
             break;
         }
         */
-        
+
         float3 hitPoint = MathUtils::float3_add(ray.origin, MathUtils::float3_scale(ray.direction, closestT));
         float3 normal = hitTriangle.normal;
-        
+
         // If the hit surface is emissive, add its contribution and terminate.
         if (hitTriangle.material.emission.x > 0.0f ||
             hitTriangle.material.emission.y > 0.0f ||
@@ -264,7 +263,7 @@ __device__ float3 pathTrace(
             }
             break;
         }
-        
+
         // Decide between diffuse and specular reflection.
         float sample = curand_uniform(randState);
         float diffuseProbability = 1.0f - hitTriangle.material.metallic;
@@ -272,14 +271,14 @@ __device__ float3 pathTrace(
         if (sample < diffuseProbability) {
             // Direct lighting (next–event estimation)
             float3 directLight = sampleDirectLight(hitPoint, normal,
-                bvhNodes, triangleIndices, triangles, rootIndex,
-                lightTriangles, numLights, randState);
+                                                   bvhNodes, triangleIndices, triangles, rootIndex,
+                                                   lightTriangles, numLights, randState);
 
             // Diffuse BRDF = albedo/π.
             float3 brdf = MathUtils::float3_scale(hitTriangle.material.albedo, 1.0f / M_PI);
             color = MathUtils::float3_add(color,
-                        MathUtils::float3_multiply(throughput,
-                        MathUtils::float3_multiply(brdf, directLight)));
+                                          MathUtils::float3_multiply(throughput,
+                                                                     MathUtils::float3_multiply(brdf, directLight)));
 
             // Diffuse bounce: sample a new direction.
             newDir = randomCosineWeightedHemisphere(normal, randState);
@@ -295,13 +294,12 @@ __device__ float3 pathTrace(
                                        MathUtils::float3_scale(hitTriangle.material.albedo, hitTriangle.material.metallic));
             float fresnel = schlickFresnel(fmaxf(MathUtils::dot(normal, newDir), 0.0f), F0);
 
-            
             throughput = MathUtils::float3_multiply(throughput, make_float3(fresnel, fresnel, fresnel));
         }
-        
+
         ray.origin = hitPoint;
         ray.direction = newDir;
-        
+
         // Russian roulette termination.
         float p = fmaxf(throughput.x, fmaxf(throughput.y, throughput.z));
         if (curand_uniform(randState) > p)
@@ -329,25 +327,25 @@ __device__ float3 pathTrace(
  * @param lightTriangles List of emissive triangles.
  * @param numLights Number of lights.
  */
-__global__ void renderKernel(uchar4* pixels, int width, int height,
-    BVHNode* bvhNodes, int* triangleIndices, Triangle* triangles, int rootIndex,
-    curandState* randStates,
-    float3 cameraPos, float3 cameraDir, float objectYaw, float objectPitch,
-    Triangle* lightTriangles, int numLights)
-{
+__global__ void renderKernel(uchar4 *pixels, int width, int height,
+                             BVHNode *bvhNodes, int *triangleIndices, Triangle *triangles, int rootIndex,
+                             curandState *randStates,
+                             float3 cameraPos, float3 cameraDir, float objectYaw, float objectPitch,
+                             Triangle *lightTriangles, int numLights) {
     int x = blockDim.x * blockIdx.x + threadIdx.x;
     int y = blockDim.y * blockIdx.y + threadIdx.y;
-    if (x >= width || y >= height) return;
-    
+    if (x >= width || y >= height)
+        return;
+
     int idx = y * width + x;
     curandState localRandState = randStates[idx];
     float3 color = make_float3(0, 0, 0);
     int numSamples = 40;
-    
+
     for (int i = 0; i < numSamples; i++) {
         Ray worldRay;
         worldRay.origin = cameraPos;
-        
+
         // Anti-aliasing jitter.
         float jitterX = curand_uniform(&localRandState) - 0.5f;
         float jitterY = curand_uniform(&localRandState) - 0.5f;
@@ -357,15 +355,15 @@ __global__ void renderKernel(uchar4* pixels, int width, int height,
             ((y + jitterY - height / 2.0f) / height) * 2.0f,
             1.0f));
         worldRay.direction = pixelDir;
-        
+
         // Inverse-rotate the ray into object (local) space.
         Ray localRay = inverseRotateRay(worldRay, objectYaw, objectPitch);
-        
+
         color = MathUtils::float3_add(color,
-            pathTrace(localRay, bvhNodes, triangleIndices, triangles, rootIndex,
-                      &localRandState, 20, lightTriangles, numLights));
+                                      pathTrace(localRay, bvhNodes, triangleIndices, triangles, rootIndex,
+                                                &localRandState, 20, lightTriangles, numLights));
     }
-    
+
     color = MathUtils::float3_scale(color, 1.0f / numSamples);
     pixels[idx] = make_uchar4(
         fminf(color.x * 255, 255),

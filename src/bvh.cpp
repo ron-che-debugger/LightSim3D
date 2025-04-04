@@ -27,21 +27,21 @@ namespace {
  * @param maxLeafSize Maximum number of triangles allowed in a leaf node.
  * @return The index of the created node in the nodes vector.
  */
-int buildBVHRecursive(const vector<Triangle>& triangles,
-                      vector<int>& indices,
-                      vector<BVHNode>& nodes,
+int buildBVHRecursive(const vector<Triangle> &triangles,
+                      vector<int> &indices,
+                      vector<BVHNode> &nodes,
                       int start, int count,
                       int maxLeafSize) {
     BVHNode node;
 
     // Compute bounding box and centroid bounding box for current triangle range
     AABB bbox;
-    bbox.min = make_float3( 1e30f,  1e30f,  1e30f);
+    bbox.min = make_float3(1e30f, 1e30f, 1e30f);
     bbox.max = make_float3(-1e30f, -1e30f, -1e30f);
     AABB centroidBBox;
-    centroidBBox.min = make_float3( 1e30f,  1e30f,  1e30f);
+    centroidBBox.min = make_float3(1e30f, 1e30f, 1e30f);
     centroidBBox.max = make_float3(-1e30f, -1e30f, -1e30f);
-    
+
     for (int i = start; i < start + count; ++i) {
         int triIndex = indices[i];
         AABB triBox = computeTriangleAABB(triangles[triIndex]);
@@ -83,7 +83,7 @@ int buildBVHRecursive(const vector<Triangle>& triangles,
 
         // Recursively build child nodes
         int mid = start + count / 2;
-        int leftChild  = buildBVHRecursive(triangles, indices, nodes, start, count / 2, maxLeafSize);
+        int leftChild = buildBVHRecursive(triangles, indices, nodes, start, count / 2, maxLeafSize);
         int rightChild = buildBVHRecursive(triangles, indices, nodes, mid, count - count / 2, maxLeafSize);
 
         nodes[nodeIndex].bbox = bbox;

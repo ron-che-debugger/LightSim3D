@@ -29,17 +29,17 @@ float lastY = height / 2.0f;
 float objectYaw = 0.0f;
 float objectPitch = 0.0f;
 
-bool cursorLocked = true;  // Track whether the cursor is locked
+bool cursorLocked = true; // Track whether the cursor is locked
 
 GLuint pbo;
-cudaGraphicsResource* cudaPBOResource;
+cudaGraphicsResource *cudaPBOResource;
 
 /**
  * @brief Update camera position using WASD and vertical keys based on user input.
  *
  * @param window Pointer to the GLFW window handling input events.
  */
-void updateCamera(GLFWwindow* window) {
+void updateCamera(GLFWwindow *window) {
     float speed = 0.1f;
     float3 right = MathUtils::normalize(MathUtils::cross(make_float3(0, 1, 0), cameraDir));
 
@@ -66,7 +66,7 @@ void updateCamera(GLFWwindow* window) {
  * @param xpos Current X position of the mouse.
  * @param ypos Current Y position of the mouse.
  */
-void updateMouse(GLFWwindow* window, double xpos, double ypos) {
+void updateMouse(GLFWwindow *window, double xpos, double ypos) {
     // Only update rotation if the cursor is locked
     if (!cursorLocked)
         return;
@@ -104,10 +104,10 @@ void updateMouse(GLFWwindow* window, double xpos, double ypos) {
  * @param action Action type (press, release).
  * @param mods Modifier keys (shift, alt, etc.).
  */
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);  // Unlock the cursor
-        cursorLocked = false; // Stop mouse rotation when cursor is unlocked
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // Unlock the cursor
+        cursorLocked = false;                                      // Stop mouse rotation when cursor is unlocked
     }
 }
 
@@ -119,35 +119,35 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
  * @param action Action type (press or release).
  * @param mods Modifier keys.
  */
-void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  // Re-lock the cursor
-        cursorLocked = true; // Resume mouse rotation when cursor is locked
-        firstMouse = true;   // Reset firstMouse to avoid jump on re-locking
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Re-lock the cursor
+        cursorLocked = true;                                         // Resume mouse rotation when cursor is locked
+        firstMouse = true;                                           // Reset firstMouse to avoid jump on re-locking
     }
 }
 
 /**
  * @brief Initialize GLFW, GLEW, input callbacks, and set up CUDA-OpenGL interop with a pixel buffer object.
  */
-void initOpenGL(){
+void initOpenGL() {
     // Initialize GLFW
-    if (!glfwInit()){
+    if (!glfwInit()) {
         cerr << "Failed to initialize GLFW" << endl;
         exit(EXIT_FAILURE);
     }
 
     // Create OpenGL Window
-    GLFWwindow* window = glfwCreateWindow(width, height, "CUDA Raytracer", NULL, NULL);
-    if (!window){
+    GLFWwindow *window = glfwCreateWindow(width, height, "CUDA Raytracer", NULL, NULL);
+    if (!window) {
         cerr << "Failed to create OpenGL window" << endl;
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(window); // Tell OpenGL which window it should render into
     glfwSetCursorPosCallback(window, updateMouse);
-    glfwSetKeyCallback(window, keyCallback);       // Register ESC key handling
-    glfwSetMouseButtonCallback(window, mouseButtonCallback);  // Register mouse click handling
+    glfwSetKeyCallback(window, keyCallback);                     // Register ESC key handling
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);     // Register mouse click handling
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Initially disable cursor
 
     // Initialize GLEW
@@ -157,7 +157,7 @@ void initOpenGL(){
     }
 
     // Generate and bind PBO
-    glGenBuffers(1, &pbo);  // Create 
+    glGenBuffers(1, &pbo);                     // Create
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo); // Make pbo the active Pixel Buffer Object for OpenGL
     // Allocates memory for the buffer but does NOT fill it yet
     // GL_DYNAMIC_DRAW - Usage hint: Data will be modified frequently
